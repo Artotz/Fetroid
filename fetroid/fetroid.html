@@ -89,8 +89,6 @@
     Player.dy += Player.accY;
     //Player.y += Player.dy;
 
-    aux = [false, false, false, false, false, false, false, false];
-    
     var bI, bJ;
     bI = Math.floor(Player.y / (height*scl/gI));
     bJ = Math.floor(Player.x / (width*scl/gJ));
@@ -140,28 +138,28 @@
       }
 
       //DIREITA SUPERIOR
-      if(bI > 0 && !collidedX)
-        if(grid[bI-1][bJ+1] == 1){
-          if(rectCollision(fPlayer,
-          {x: (bJ+1) * (width*scl/gJ), y: (bI-1) * (height*scl/gI), width: (width*scl/gJ), height: (height*scl/gI)})){
-            Player.dx = 0;
-            Player.x = (bJ+1) * (width*scl/gJ) - Player.width/2;
-            collidedX = true;
-            aux[2] = true;
-          }
-        }
+      // if(bI > 0 && !collidedX)
+      //   if(grid[bI-1][bJ+1] == 1){
+      //     if(rectCollision(fPlayer,
+      //     {x: (bJ+1) * (width*scl/gJ), y: (bI-1) * (height*scl/gI), width: (width*scl/gJ), height: (height*scl/gI)})){
+      //       Player.dx = 0;
+      //       Player.x = (bJ+1) * (width*scl/gJ) - Player.width/2;
+      //       collidedX = true;
+      //       aux[2] = true;
+      //     }
+      //   }
 
       //DIREITA INFERIOR
-      if(bI < gI -1 && !collidedX && !Player.onGround)
-        if(grid[bI+1][bJ+1] == 1){
-          if(rectCollision(fPlayer,
-          {x: (bJ+1) * (width*scl/gJ), y: (bI+1) * (height*scl/gI), width: (width*scl/gJ), height: (height*scl/gI)})){
-            Player.dx = 0;
-            Player.x = (bJ+1) * (width*scl/gJ) - Player.width/2;
-            collidedX = true;
-            aux[7] = true;
-          }
-        }
+      // if(bI < gI -1 && !collidedX)
+      //   if(grid[bI+1][bJ+1] == 1){
+      //     if(rectCollision(fPlayer,
+      //     {x: (bJ+1) * (width*scl/gJ), y: (bI+1) * (height*scl/gI), width: (width*scl/gJ), height: (height*scl/gI)})){
+      //       Player.dx = 0;
+      //       Player.x = (bJ+1) * (width*scl/gJ) - Player.width/2;
+      //       collidedX = true;
+      //       aux[7] = true;
+      //     }
+      //   }
 
     }
 
@@ -178,28 +176,28 @@
       }
 
       //ESQUERDA SUPERIOR
-      if(bI > 0 && !collidedX)
-        if(grid[bI-1][bJ-1] == 1){
-          if(rectCollision(fPlayer,
-          {x: (bJ-1) * (width*scl/gJ), y: (bI-1) * (height*scl/gI), width: (width*scl/gJ), height: (height*scl/gI)})){
-            Player.dx = 0;
-            Player.x = (bJ) * (width*scl/gJ) + Player.width/2;
-            collidedX = true;
-            aux[0] = true;
-          }
-        }
+      // if(bI > 0 && !collidedX)
+      //   if(grid[bI-1][bJ-1] == 1){
+      //     if(rectCollision(fPlayer,
+      //     {x: (bJ-1) * (width*scl/gJ), y: (bI-1) * (height*scl/gI), width: (width*scl/gJ), height: (height*scl/gI)})){
+      //       Player.dx = 0;
+      //       Player.x = (bJ) * (width*scl/gJ) + Player.width/2;
+      //       collidedX = true;
+      //       aux[0] = true;
+      //     }
+      //   }
 
       //ESQUERDA INFERIOR
-      if(bI < gI -1 && !collidedX && !Player.onGround)
-        if(grid[bI+1][bJ-1] == 1){
-          if(rectCollision(fPlayer,
-          {x: (bJ-1) * (width*scl/gJ), y: (bI+1) * (height*scl/gI), width: (width*scl/gJ), height: (height*scl/gI)})){
-            Player.dx = 0;
-            Player.x = (bJ) * (width*scl/gJ) + Player.width/2;
-            collidedX = true;
-            aux[5] = true;
-          }
-        }
+      // if(bI < gI -1 && !collidedX)
+      //   if(grid[bI+1][bJ-1] == 1){
+      //     if(rectCollision(fPlayer,
+      //     {x: (bJ-1) * (width*scl/gJ), y: (bI+1) * (height*scl/gI), width: (width*scl/gJ), height: (height*scl/gI)})){
+      //       Player.dx = 0;
+      //       Player.x = (bJ) * (width*scl/gJ) + Player.width/2;
+      //       collidedX = true;
+      //       aux[5] = true;
+      //     }
+      //   }
 
     }
 
@@ -412,6 +410,8 @@
       ctx.fillRect((bJ) * (width*scl/gJ) -offset.x, (bI+1) * (height*scl/gI) -offset.y, (width*scl/gJ), (height*scl/gI));
     if(aux[7])
       ctx.fillRect((bJ+1) * (width*scl/gJ) -offset.x, (bI+1) * (height*scl/gI) -offset.y, (width*scl/gJ), (height*scl/gI));
+
+    aux = [false, false, false, false, false, false, false, false];
 
     ctx.fillText("dx: " + p1.dx.toFixed(2) + " dy: " + p1.dy.toFixed(2), 25, 25);
     ctx.fillText("accX: " + p1.accX.toFixed(2) + " accY: " + p1.accY.toFixed(2), 25, 45);

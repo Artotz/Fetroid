@@ -1,0 +1,426 @@
+﻿<!doctype html>
+<html>
+<head>
+  <title> Fetroid </title>
+  <meta charset="utf-8"></meta>
+  <link rel="stylesheet" type="text/css" href="scripts/canvas.css"></link>
+  <script type="text/javascript" src="scripts/logicalFunctions.js"></script>
+</head>
+<body bgcolor = "#36F" oncontextmenu = "return false">
+<script>
+  var
+    canvas,
+    ctx,
+    frames = 0,
+    width = 1080,
+    height = 540,
+
+  	scl = 1,
+  	zoom = 1,
+  	offset = {x: 0, y: 0},
+
+    p1 = {x: 100, y: 100, width: 30, height: 30, dx: 0, dy: 0, accX: 0, accY: 0, onGround: false},
+    p1Keys = {u: 87, l: 65, d: 83, r: 68},
+    p1Control = {u: false, l: false, d: false, r: false},
+
+    aux = [false, false, false, false, false, false, false, false],
+
+    gI = 10,
+    gJ = 20,
+    grid = [[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+            [0,0,0,0,0,0,1,1,1,0,0,0,0,0,0,0,0,0,0,0],
+            [0,0,0,0,0,0,0,0,0,0,1,1,1,0,0,0,0,0,0,0],
+            [0,1,0,0,1,0,0,0,0,0,0,0,0,0,1,1,1,0,0,0],
+            [0,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+            [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,0,0],
+            [0,0,0,0,0,0,0,0,0,0,0,1,1,1,0,0,0,0,0,0],
+            [0,0,0,0,0,0,0,1,1,1,0,0,0,0,0,0,0,0,0,0],
+            [0,0,0,0,0,1,0,1,0,0,0,0,0,0,0,0,0,0,0,0],
+            [0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]];
+
+
+
+  function checkCollision(Player, Rect){
+
+  }
+
+  function controlPlayer(Player, Control){
+    var acc = 0.1;
+    var accMax = 0.5;
+
+    if(Control.l){
+      Player.accX -= acc;
+      if(Player.accX < -accMax)
+        Player.accX = -accMax;
+    }
+    else if(Control.r){
+      Player.accX += acc;
+      if(Player.accX > accMax)
+        Player.accX = accMax;
+    }
+    else
+      Player.accX = 0;
+
+    if(Control.u){
+      if(Player.onGround){
+        Player.dy = -11;
+        Player.onGround = false;
+      }
+    }
+    else if(Control.d){
+
+    }
+
+    Player.dx += Player.accX;
+
+    Player.dx *= 0.9;
+    if(Math.abs(Player.dx) < 0.01)
+      Player.dx = 0;
+
+    //Player.x += Player.dx;
+
+    if(!Player.onGround){
+        Player.accY += 0.03;
+    }
+
+    if(!(Player.y + Player.height/2 + 1 > height*scl))
+      Player.onGround = false;
+
+    Player.dy += Player.accY;
+    //Player.y += Player.dy;
+
+    aux = [false, false, false, false, false, false, false, false];
+    
+    var bI, bJ;
+    bI = Math.floor(Player.y / (height*scl/gI));
+    bJ = Math.floor(Player.x / (width*scl/gJ));
+    var collidedX, collidedY;
+    collidedX = collidedY = false;
+
+    var fPlayer = {x: Player.x + Player.dx -Player.width/2, y: Player.y + Player.dy -Player.height/2, width: Player.width, height: Player.height};
+
+    //BAIXO
+    if(bI < gI -1)
+    if(grid[bI+1][bJ] == 1){
+      if(rectCollision(fPlayer,
+      {x: (bJ) * (width*scl/gJ), y: (bI+1) * (height*scl/gI), width: (width*scl/gJ), height: (height*scl/gI)})){
+        Player.dy = 0;
+        Player.y = (bI+1) * (height*scl/gI) - Player.height/2;
+        Player.dy = 0;
+        Player.accY = 0;
+        Player.onGround = true;
+        aux[6] = true;
+      }
+      else
+      Player.onGround = false;
+    }
+
+    //CIMA
+    if(bI > 0)
+    if(grid[bI-1][bJ] == 1){
+      if(rectCollision(fPlayer,
+      {x: (bJ) * (width*scl/gJ), y: (bI-1) * (height*scl/gI), width: (width*scl/gJ), height: (height*scl/gI)})){
+        Player.dy = 0;
+        Player.y = (bI) * (height*scl/gI) + Player.height/2;
+        aux[1] = true;
+
+      }
+    }
+
+    if(Player.dx > 0 && bJ < gJ -1){
+      //DIREITA
+      if(grid[bI][bJ+1] == 1){
+        if(rectCollision(fPlayer,
+        {x: (bJ+1) * (width*scl/gJ), y: (bI) * (height*scl/gI), width: (width*scl/gJ), height: (height*scl/gI)})){
+          Player.dx = 0;
+          Player.x = (bJ+1) * (width*scl/gJ) - Player.width/2;
+          collidedX = true;
+          aux[4] = true;
+        }
+      }
+
+      //DIREITA SUPERIOR
+      if(bI > 0 && !collidedX)
+        if(grid[bI-1][bJ+1] == 1){
+          if(rectCollision(fPlayer,
+          {x: (bJ+1) * (width*scl/gJ), y: (bI-1) * (height*scl/gI), width: (width*scl/gJ), height: (height*scl/gI)})){
+            Player.dx = 0;
+            Player.x = (bJ+1) * (width*scl/gJ) - Player.width/2;
+            collidedX = true;
+            aux[2] = true;
+          }
+        }
+
+      //DIREITA INFERIOR
+      if(bI < gI -1 && !collidedX && !Player.onGround)
+        if(grid[bI+1][bJ+1] == 1){
+          if(rectCollision(fPlayer,
+          {x: (bJ+1) * (width*scl/gJ), y: (bI+1) * (height*scl/gI), width: (width*scl/gJ), height: (height*scl/gI)})){
+            Player.dx = 0;
+            Player.x = (bJ+1) * (width*scl/gJ) - Player.width/2;
+            collidedX = true;
+            aux[7] = true;
+          }
+        }
+
+    }
+
+    else if(Player.dx < 0 && bJ > 0){
+      //ESQUERDA
+      if(grid[bI][bJ-1] == 1){
+        if(rectCollision(fPlayer,
+        {x: (bJ-1) * (width*scl/gJ), y: (bI) * (height*scl/gI), width: (width*scl/gJ), height: (height*scl/gI)})){
+          Player.dx = 0;
+          Player.x = (bJ) * (width*scl/gJ) + Player.width/2;
+          collidedX = true;
+          aux[3] = true;
+        }
+      }
+
+      //ESQUERDA SUPERIOR
+      if(bI > 0 && !collidedX)
+        if(grid[bI-1][bJ-1] == 1){
+          if(rectCollision(fPlayer,
+          {x: (bJ-1) * (width*scl/gJ), y: (bI-1) * (height*scl/gI), width: (width*scl/gJ), height: (height*scl/gI)})){
+            Player.dx = 0;
+            Player.x = (bJ) * (width*scl/gJ) + Player.width/2;
+            collidedX = true;
+            aux[0] = true;
+          }
+        }
+
+      //ESQUERDA INFERIOR
+      if(bI < gI -1 && !collidedX && !Player.onGround)
+        if(grid[bI+1][bJ-1] == 1){
+          if(rectCollision(fPlayer,
+          {x: (bJ-1) * (width*scl/gJ), y: (bI+1) * (height*scl/gI), width: (width*scl/gJ), height: (height*scl/gI)})){
+            Player.dx = 0;
+            Player.x = (bJ) * (width*scl/gJ) + Player.width/2;
+            collidedX = true;
+            aux[5] = true;
+          }
+        }
+
+    }
+
+    Player.x += Player.dx;
+    Player.y += Player.dy;
+
+  }
+
+  function boundPlayer(Player){
+    if(Player.x + Player.width/2 > width*scl){
+      Player.x = width*scl - Player.width/2;
+      Player.dx = 0;
+      Player.accX = 0;
+    }
+    else if(Player.x - Player.width/2 < 0){
+      Player.x = Player.width/2;
+      Player.dx = 0;
+      Player.accX = 0;
+    }
+
+    if(Player.y + Player.height/2 > height*scl){
+      Player.y = height*scl - Player.height/2;
+      Player.dy = 0;
+      Player.accY = 0;
+      Player.onGround = true;
+    }
+    else if(Player.y - Player.height/2 < 0){
+      Player.y = Player.height/2;
+      Player.dy = 0;
+    }
+  }
+
+  function drawPlayer(Player){
+    ctx.fillRect(Player.x -Player.width/2 -offset.x, Player.y -Player.height/2 -offset.y, Player.width, Player.height);
+
+    ctx.fillStyle = "#000";
+    ctx.beginPath();
+    ctx.arc(Player.x -offset.x +5*Player.accX, Player.y -offset.y, 5, 0, 2*Math.PI, false);
+    ctx.fill();
+  }
+
+  function drawGrid(){
+    for(var i = 0; i < gI; i++){
+      for(var j = 0; j < gJ; j++){
+        if(grid[i][j] == 1){
+          ctx.fillRect(j * (width*scl/gJ) -offset.x, i * (height*scl/gI) -offset.y, (width*scl/gJ), (height*scl/gI));
+        }
+
+      }
+    }
+
+  }
+
+  function keyDown(evt){
+    switch(evt.keyCode){
+      case p1Keys.u:
+        p1Control.u = true;
+        break;
+      case p1Keys.l:
+        p1Control.l = true;
+        break;
+      case p1Keys.d:
+        p1Control.d = true;
+        break;
+      case p1Keys.r:
+        p1Control.r = true;
+        break;
+    }
+  }
+
+  function keyUp(evt){
+    switch(evt.keyCode){
+      case p1Keys.u:
+        p1Control.u = false;
+        break;
+      case p1Keys.l:
+        p1Control.l = false;
+        break;
+      case p1Keys.d:
+        p1Control.d = false;
+        break;
+      case p1Keys.r:
+        p1Control.r = false;
+        break;
+    }
+  }
+
+  function mDown(evt){
+  }
+
+  function mUp(evt){
+  }
+
+  function mMove(evt){
+  }
+
+  function main(){
+    canvas = document.createElement("canvas");
+
+    canvas.width = width;
+    canvas.height = height;
+
+    ctx = canvas.getContext("2d");
+
+    window.addEventListener("keydown", keyDown, false);
+    window.addEventListener("keyup", keyUp, false);
+
+    ctx.font = "20px Arial";
+
+    document.body.appendChild(canvas);
+
+    run();
+  }
+
+  function run(){
+    update();
+    render();
+    window.requestAnimationFrame(run);
+  }
+
+  function update(){
+    controlPlayer(p1, p1Control);
+    boundPlayer(p1);
+
+  	/*ZOOM
+    var disX = Math.abs(p1.x - p2.x);
+    var disY = Math.abs(p1.y - p2.y);
+
+    var aux1 = width / (disX + 200);
+    var aux2 = height / (disY + 200);
+
+    zoom = Math.min(aux1, aux2);
+    // zoom = 1/scl;
+
+    if(zoom > 1) zoom = 1;
+    else if(zoom < 1/scl) zoom = 1/scl;
+    */
+
+  	//OFFSET
+  	//var auxX = Math.min(p1.x, p2.x) + (Math.max(p1.x, p2.x) - Math.min(p1.x, p2.x))/2;
+  	//var auxY = Math.min(p1.y, p2.y) + (Math.max(p1.y, p2.y) - Math.min(p1.y, p2.y))/2;
+
+  	//offset.x = (-(1/zoom)*width/2 + p1.x -p1.width/2);
+  	//offset.y = (-(1/zoom)*height/2 + p1.y -p1.height/2);
+
+    /*
+    if(offset.x < 0) offset = 0;
+    if(offset.x > width*(scl)) offset = width*(scl-1);
+    if(offset.y < 0) offset.y = 0;
+    if(offset.y > height*(scl-1)) offset.y = height*(scl-1);
+    */
+
+
+  }
+
+  function render(){
+    ctx.fillStyle = "#FFF";
+    ctx.fillRect(0, 0, width, height);
+
+    ctx.globalAlpha = 1/5;
+    ctx.lineWidth = 2;
+    for(var i = 0; i < gI+1; ++i){
+      ctx.beginPath();
+      ctx.moveTo(0 +offset.x, i*(height*scl/gI) +offset.y);
+      ctx.lineTo(gJ*(height*scl/gI) +offset.x, i*(height*scl/gI) +offset.y);
+      ctx.stroke();
+    }
+
+    for(var j = 0; j < gJ+1; ++j){
+      ctx.beginPath();
+      ctx.moveTo(j*(width*scl/gJ) +offset.x, 0 +offset.y);
+      ctx.lineTo(j*(width*scl/gJ) +offset.x, gI*(width*scl/gJ) +offset.y);
+      ctx.stroke();
+    }
+    ctx.globalAlpha = 1;
+
+    ctx.fillStyle = "#F00";
+    drawPlayer(p1);
+
+    ctx.fillStyle = "#000";
+    drawGrid();
+
+    /*
+    var wallWidth = 2000;
+    ctx.fillRect(0 -wallWidth -offset.x, 0 -offset.y, width*scl +wallWidth*2, -wallWidth);
+    ctx.fillRect(0 -wallWidth -offset.x, height*scl -offset.y, width*scl +wallWidth*2, wallWidth);
+    ctx.fillRect(0 -offset.x, 0 -wallWidth -offset.y, -wallWidth, height*scl +2*wallWidth);
+    ctx.fillRect(width*scl -offset.x, 0 -wallWidth -offset.y, wallWidth, height*scl +2*wallWidth);
+    */
+
+    ctx.fillStyle = "#F00";
+
+    var bI, bJ;
+    bI = Math.floor(p1.y / (height*scl/gI));
+    bJ = Math.floor(p1.x / (width*scl/gJ));
+
+    if(aux[0])
+      ctx.fillRect((bJ-1) * (width*scl/gJ) -offset.x, (bI-1) * (height*scl/gI) -offset.y, (width*scl/gJ), (height*scl/gI));
+    if(aux[1])
+      ctx.fillRect((bJ) * (width*scl/gJ) -offset.x, (bI-1) * (height*scl/gI) -offset.y, (width*scl/gJ), (height*scl/gI));
+    if(aux[2])
+      ctx.fillRect((bJ+1) * (width*scl/gJ) -offset.x, (bI-1) * (height*scl/gI) -offset.y, (width*scl/gJ), (height*scl/gI));
+    if(aux[3])
+      ctx.fillRect((bJ-1) * (width*scl/gJ) -offset.x, (bI) * (height*scl/gI) -offset.y, (width*scl/gJ), (height*scl/gI));
+    if(aux[4])
+      ctx.fillRect((bJ+1) * (width*scl/gJ) -offset.x, (bI) * (height*scl/gI) -offset.y, (width*scl/gJ), (height*scl/gI));
+    if(aux[5])
+      ctx.fillRect((bJ-1) * (width*scl/gJ) -offset.x, (bI+1) * (height*scl/gI) -offset.y, (width*scl/gJ), (height*scl/gI));
+    if(aux[6])
+      ctx.fillRect((bJ) * (width*scl/gJ) -offset.x, (bI+1) * (height*scl/gI) -offset.y, (width*scl/gJ), (height*scl/gI));
+    if(aux[7])
+      ctx.fillRect((bJ+1) * (width*scl/gJ) -offset.x, (bI+1) * (height*scl/gI) -offset.y, (width*scl/gJ), (height*scl/gI));
+
+    ctx.fillText("dx: " + p1.dx.toFixed(2) + " dy: " + p1.dy.toFixed(2), 25, 25);
+    ctx.fillText("accX: " + p1.accX.toFixed(2) + " accY: " + p1.accY.toFixed(2), 25, 45);
+    ctx.fillText("I: " + bI + " J: " + bJ, 25, 65);
+    ctx.fillText("gnd: " + p1.onGround, 25, 85);
+  }
+
+  main();
+
+</script>
+</body>
+</html>

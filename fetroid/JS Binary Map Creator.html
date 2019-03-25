@@ -1,4 +1,4 @@
-﻿<!doctype html>
+<!doctype html>
 <html>
 <head>
   <title> JS Map Creator </title>
@@ -7,8 +7,16 @@
   <script type="text/javascript" src="scripts/logicalFunctions.js"></script>
 </head>
 <body bgcolor = "#36F" oncontextmenu = "return false">
-<input type="text" value="me ignore" id="myInput">
+
+  <input type="text" value="me ignore" id="myInput">
+  <br><br><br><br><br><br>
+  <button id="PlusColuna" type="button" onclick="changeGridButton('PlusColuna')" > +1 Coluna</button>
+  <button id="MinusColuna" type="button" onclick="changeGridButton('MinusColuna')" > -1 Coluna</button>
+  <br>
+  <button id="PlusLinha" type="button" onclick="changeGridButton('PlusLinha')" > +1 Linha </button>
+  <button id="MinusLinha" type="button" onclick="changeGridButton('MinusLinha')" > -1 Linha </button>
 <script>
+
   var
     canvas,
     ctx,
@@ -24,8 +32,37 @@
     gI,
     gJ;
 
+    function changeGridButton(comando){
+
+        if (comando == "PlusColuna"){
+          for (i = 0; i < gI; i++){
+            grid[i].push(0);
+          }
+          gJ++;
+        } else if (comando == "MinusColuna"){
+          if (gJ != 1){
+            for (i = 0; i < gI; i++){
+              grid[i].pop(0);
+            }
+            gJ--;
+          }
+        } else if (comando == "PlusLinha"){
+          grid.push(new Array());
+          gI++;
+          for(j = 0; j < gJ; j++){
+            grid[gI - 1].push(0);
+          }
+        } else if (comando == "MinusLinha"){
+            if (gI != 1){
+              grid.pop(new Array());
+              gI--;
+            }
+          }
+    }
 
   function createGrid(){
+    gridEmpty = [];
+    grid = gridEmpty;
 
     for(var i = 0; i < gI; i++){
       grid.push(new Array());

@@ -11,10 +11,10 @@
 
 
 //-------------------- VARIÁVEIS -------------------------------------------------------------------------------
-
   var
     // VARIAVEIS CONFUSAS ------------------
-    auxG = 0, //  Variavel global fudida. Serve pra contar regressivamente o floatTime definido. Importante pra float time
+    auxG = 0, //  Serve pra contar regressivamente o floatTime definido. Importante pra float time
+    airFramesGlobal = 0, // Remover quando terminar de debuggar
 
     // CANVAS & FRAMES ---------------------
     canvas,
@@ -35,25 +35,17 @@
     // MAPAS --------------------------------
     tamBloco = 70, // Tamanho do tile/quadrado da grade
 
-    grid = [[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
-            [1,0,0,0,0,0,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
-            [1,0,0,0,0,0,0,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
-            [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
-            [0,0,0,0,0,0,0,0,0,0,0,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
-            [0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,0,0,0,0,0,0,0,0,0,0],
-            [0,1,1,1,0,0,0,1,1,1,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0],
-            [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,0,0,0,0,0,0,0,0,0],
-            [0,0,0,0,0,0,0,0,0,0,0,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0],
-            [0,0,0,0,0,0,0,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
-            [0,0,0,0,0,0,0,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
-            [0,0,0,0,0,0,0,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
-            [0,0,0,0,0,0,0,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
-            [0,0,0,0,0,0,0,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
-            [0,0,0,0,0,0,0,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
-            [0,0,0,0,0,0,0,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
-            [0,0,0,0,0,0,0,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
-            [0,0,0,0,0,1,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
-            [0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]],
+    grid = [[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+            [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+            [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+            [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+            [1,0,0,0,0,1,1,0,0,1,1,0,0,0,0,1,1,0,0,1],
+            [1,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,1],
+            [1,0,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1],
+            [1,0,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,1,1,1],
+            [1,0,0,0,0,0,0,0,0,0,1,1,0,0,0,0,1,1,1,1],
+            [1,0,0,0,0,0,0,0,0,1,1,1,0,0,0,1,1,1,1,1],
+            [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]];
 
 
     // CAMPO DE VISÃO --------------------------
@@ -80,22 +72,32 @@
   }
 
   function controlPlayer(Player, Control){
-    var accX, maxAccX, maxVelX, grav, floatGrav, maxAccY, jmpVel, maxVelY, floatTime;
+    var accX, maxAccX, maxVelX, grav, floatGrav, maxAccY, jmpVel, maxVelY, floatTime, airFrames;
 
     // HORIZONTAL
     accX = 0.2; //accX por frame
     maxAccX = 2;
-    maxVelX = 7;
+    maxVelX = 7.4;
 
     if(Control.l){ // Se control.left estiver pressionado
-      if(Player.accX > 0) //
+      if(p1.onGround == false)  // Modifica a velocidade do player1 no ar
+        maxVelX = 5.5;
+      else {
+        maxVelX = 7;
+      }
+      if(Player.accX > 0) // Modifica velocidade do player1 em turning
         Player.accX = 0;
       Player.accX -= accX;
       if(Player.accX < -maxAccX)
         Player.accX = -maxAccX;
     }
     else if(Control.r){// Se control.right estiver pressionado
-      if(Player.accX < 0)
+      if(p1.onGround == false)  // Modifica a velocidade do player1 no ar
+        maxVelX = 5.3;
+      else {
+        maxVelX = 7;
+      }
+      if(Player.accX < 0) // Modifica velocidade do player1 em turning
         Player.accX = 0;
       Player.accX += accX;
       if(Player.accX > maxAccX)
@@ -118,19 +120,27 @@
     //  Player.dx = 0;
 
     // VERTICAL
-    grav = 0.1; //gravidade
-    floatGrav = 0.01; //gravidade quando UP esta pressionado
-    floatTime = 42; //por quanto tempo floatGrav dura (frames)
-    maxAccY = 0.5; //acc y max
-    jmpVel = -7; //velocidade do pulo
-    maxVelY = 10; //velocidade max
+          // Curiosidades com os dados atuais: você fica 6 frames em estado Coiote
+          // Shorthop: 27 frames
+          // Normal Jump: 45 frames
+          // Coiote Jump: 48 frames
+
+    airFrames = 0; // Quantidade de frames do player no ar
+    grav = 0.2; //gravidade AKA Aceleração da aceleração
+    floatGrav = 0.13; //gravidade quando UP esta pressionado AKA Aceleração da aceleração quando UP está pressionado
+    floatTime = 25; //por quanto tempo floatGrav dura (frames)
+    maxAccY = 0.6; //acc y max AKA Aceleração de verdade
+    jmpVel = -12.5; //velocidade do pulo
+    maxVelY = 15.5; //velocidade max
 
     if(Control.u){
       if(Player.onGround){
+        airFrames = 0;
+        airFramesGlobal= 0; // Remover quando terminar de debuggar
         Player.dy = jmpVel;
         Player.onGround = false;
         auxG = floatTime;
-      }else if(auxG > 0){
+      } else if(auxG > 0){
         auxG--;
       }
     }
@@ -138,6 +148,19 @@
       auxG = 0;
 
     if(!Player.onGround){
+      airFrames++;
+      airFramesGlobal++; // Remover quando terminar de debuggar
+      if (Player.dy < 0 && airFrames <= 10 && !Control.u){
+          if (airFramesGlobal == 10)
+            Player.dy = 0;
+      }
+      /* // Aqui é caso tu quisesse usar um tamanho de pulo (medido em airframes) maior que o limite de airframes pra castar o shorthop
+        // PS: ainda teria que declarar "shorthop" e colocar um "shorthop = true;" no 'if' anterior
+      if (airFramesGlobal == 10 && shorthop == true){
+        Player.dy = 0;
+        shorthop = false;
+      }*/
+
       if(auxG == 0)
         Player.accY += grav;
       else{
@@ -341,6 +364,7 @@
     }
     ctx.globalAlpha = 1;
 
+    ctx.fillStyle = 'rgb(30, 30, 200)';
     for(var i = 0; i < gI; i++){
       for(var j = 0; j < gJ; j++){
         if(grid[i][j] == 1){
@@ -525,6 +549,9 @@
 
     //COIOTE TIME
     ctx.fillText("Aux: " + auxG, 25, 145);
+
+    //FRAMES NO AR
+    ctx.fillText("Air Frames " + airFramesGlobal, 25, 165);
   }
 
   main();

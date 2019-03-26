@@ -1,0 +1,246 @@
+<!doctype html>
+<html>
+<head>
+  <title> JS Map Creator </title>
+  <meta charset="utf-8"></meta>
+  <link rel="stylesheet" type="text/css" href="scripts/canvas.css"></link>
+  <script type="text/javascript" src="scripts/logicalFunctions.js"></script>
+</head>
+<body bgcolor = "#36F" oncontextmenu = "return false">
+
+  <input type="text" value="me ignore" id="myInput">
+  <br><br><br><br><br><br>
+  <button id="PlusColuna" type="button" onclick="changeGridButton('PlusColuna')" > +1 Coluna</button>
+  <button id="MinusColuna" type="button" onclick="changeGridButton('MinusColuna')" > -1 Coluna</button>
+  <br>
+  <button id="PlusLinha" type="button" onclick="changeGridButton('PlusLinha')" > +1 Linha </button>
+  <button id="MinusLinha" type="button" onclick="changeGridButton('MinusLinha')" > -1 Linha </button>
+<script>
+
+  var
+    canvas,
+    ctx,
+    frames = 0,
+    width = 1080,
+    height = 540,
+    tam = 50,
+    mClick = {x: -1, y: -1},
+    mAux = false,
+    write = true,
+    offset = {x: 0, y: 0},
+    grid = [],
+    gI,
+    gJ;
+
+    function changeGridButton(comando){
+
+        if (comando == "PlusColuna"){
+          for (i = 0; i < gI; i++){
+            grid[i].push(0);
+          }
+          gJ++;
+        } else if (comando == "MinusColuna"){
+          if (gJ != 1){
+            for (i = 0; i < gI; i++){
+              grid[i].pop(0);
+            }
+            gJ--;
+          }
+        } else if (comando == "PlusLinha"){
+          grid.push(new Array());
+          gI++;
+          for(j = 0; j < gJ; j++){
+            grid[gI - 1].push(0);
+          }
+        } else if (comando == "MinusLinha"){
+            if (gI != 1){
+              grid.pop(new Array());
+              gI--;
+            }
+          }
+    }
+
+  function createGrid(){
+    gridEmpty = [];
+    grid = gridEmpty;
+
+    for(var i = 0; i < gI; i++){
+      grid.push(new Array());
+    }
+
+    for(var i = 0; i < gI; i++){
+      for(var j = 0; j < gJ; j++){
+        grid[i].push(0);
+      }
+    }
+
+    console.log(grid);
+
+  }
+
+  function drawGrid(){
+    for(var i = 0; i < gI+1; ++i){
+      ctx.beginPath();
+      ctx.moveTo(0 +offset.x, i*tam +offset.y);
+      ctx.lineTo(gJ*tam +offset.x, i*tam +offset.y);
+      ctx.stroke();
+    }
+
+    for(var j = 0; j < gJ+1; ++j){
+      ctx.beginPath();
+      ctx.moveTo(j*tam +offset.x, 0 +offset.y);
+      ctx.lineTo(j*tam +offset.x, gI*tam +offset.y);
+      ctx.stroke();
+    }
+
+    for(var i = 0; i < gI; i++){
+      for(var j = 0; j < gJ; j++){
+        if(grid[i][j] == 1){
+          ctx.fillRect(j * tam +offset.x, i * tam +offset.y, tam, tam);
+        }
+      }
+    }
+
+  }
+
+  function mDown(evt){
+    switch (evt.button){
+      case 0:
+        write = true;
+        if(pointRectCollision({x: evt.layerX, y: evt.layerY},
+        {x: offset.x, y: offset.y, width: tam*gJ, height: tam*gI})){
+          if(write)
+            grid[Math.floor((evt.layerY-offset.y)/tam)][Math.floor((evt.layerX-offset.x)/tam)] = 1;
+          else
+            grid[Math.floor((evt.layerY-offset.y)/tam)][Math.floor((evt.layerX-offset.x)/tam)] = 0;
+        }
+        mAux = true;
+        break;
+      case 1:
+        mClick = {x: evt.layerX, y: evt.layerY};
+        console.log(mClick.x + " " + mClick.y);
+        break;
+      case 2:
+        write = false;
+        if(pointRectCollision({x: evt.layerX, y: evt.layerY},
+        {x: offset.x, y: offset.y, width: tam*gJ, height: tam*gI})){
+          if(write)
+            grid[Math.floor((evt.layerY-offset.y)/tam)][Math.floor((evt.layerX-offset.x)/tam)] = 1;
+          else
+            grid[Math.floor((evt.layerY-offset.y)/tam)][Math.floor((evt.layerX-offset.x)/tam)] = 0;
+        }
+        mAux = true;
+        break;
+    }
+  }
+
+  function mUp(evt){
+    switch (evt.button){
+      case 0:
+        mAux = false;
+        break;
+      case 1:
+        mClick = {x: -1, x: -1};
+        break;
+      case 2:
+        mAux = false;
+        break;
+    }
+  }
+
+  function mMove(evt){
+    if(mClick.x != -1 && mClick.y != -1){
+      offset.x += (mClick.x - evt.layerX)/10;
+      offset.y += (mClick.y - evt.layerY)/10;
+    }
+
+    if(mAux && pointRectCollision({x: evt.layerX, y: evt.layerY},
+    {x: offset.x, y: offset.y, width: tam*gJ, height: tam*gI})){
+      if(write)
+        grid[Math.floor((evt.layerY-offset.y)/tam)][Math.floor((evt.layerX-offset.x)/tam)] = 1;
+      else
+        grid[Math.floor((evt.layerY-offset.y)/tam)][Math.floor((evt.layerX-offset.x)/tam)] = 0;
+    }
+
+  }
+
+  function mWheel(evt){
+    if (evt.deltaY < 0) {
+      tam -= 5;
+    }
+    if (evt.deltaY > 0) {
+      tam += 5;
+    }
+  }
+
+  function keyDown(evt){
+    //console.log(evt.keyCode);
+    var copyText = document.getElementById("myInput");
+    copyText.value = "[";
+    for(var i = 0; i < gI; i++){
+      copyText.value += "[";
+      for(var j = 0; j < gJ; j++){
+        copyText.value += grid[i][j].toString();
+        if(j+1 < gJ)
+          copyText.value += ",";
+        else
+          copyText.value += "]";
+      }
+      if(i+1 < gI)
+        copyText.value += ",";
+      else
+        copyText.value += "];";
+    }
+    copyText.select();
+    document.execCommand("copy");
+    alert("Mapa copiado com sucesso.");
+  }
+
+  function main(){
+    canvas = document.createElement("canvas");
+
+    canvas.width = width;
+    canvas.height = height;
+
+    ctx = canvas.getContext("2d");
+
+    canvas.addEventListener("mousemove", mMove, false);
+    canvas.addEventListener("mousedown", mDown, false);
+    canvas.addEventListener("mouseup", mUp, false);
+    canvas.addEventListener("wheel", mWheel, false);
+
+    window.addEventListener("keydown", keyDown, false);
+
+    document.body.appendChild(canvas);
+
+    gJ = parseInt(prompt("Entre o número de blocos de largura.", ""));
+    gI = parseInt(prompt("Entre o número de blocos de altura.", ""));
+
+    createGrid();
+
+    run();
+  }
+
+  function run(){
+    update();
+    render();
+    window.requestAnimationFrame(run);
+  }
+
+  function update(){
+
+  }
+
+  function render(){
+    ctx.fillStyle = "#FFF";
+    ctx.fillRect(0, 0, width, height);
+
+    ctx.fillStyle = "#000";
+    drawGrid();
+  }
+
+  main();
+
+</script>
+</body>
+</html>

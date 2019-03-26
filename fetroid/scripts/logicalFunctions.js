@@ -61,7 +61,7 @@ function rectCollision(square1, square2){
     hmin = square2.height;
   }
 
-  if(xmin + wmin >= xmax && ymin + hmin >= ymax){
+  if(xmin + wmin > xmax && ymin + hmin > ymax){
     return true;
   }
   return false;

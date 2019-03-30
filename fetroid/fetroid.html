@@ -21,85 +21,54 @@
     canvas,
     ctx,
     frames = 0,
+    fps = 0,
+    lastCall = 0,
 
     // PLAYER 1 ----------------------------
           // Possui Struct, botões e controles.
           // Importante: "x" & "y" não são coordenadas da ponta superior esquerda, mas sim do centro da hitbox.
           // Para pegar coordenadas da ponta superior esquerda, deve-se fazer "x - p1.width"
 
-    p1 = {x: 100, y: 100, width: 50, height: 50, dx: 0, dy: 0, accX: 0, accY: 0, onGround: false},
-    p1Keys = {u: 87, l: 65, d: 83, r: 68},
-    p1Control = {u: false, l: false, d: false, r: false};
+    p1 = {x: 100, y: 100, width: 50, height: 50, dx: 0, dy: 0, dxExt: 0, dyExt: 0, accX: 0, accY: 0,
+      onGround: false, facingRight: true, iframes: 0, i: 0, j: 0},
 
-    aux = [false, false, false, false, false, false, false, false],
+    p1Keys = {u: 87, l: 65, d: 83, r: 68, shoot: 188},
+    p1Control = {u: false, l: false, d: false, r: false, shoot: false},
 
-    // MONSTROS --------------------------------
-    mobList = [];
+    aux = 0,
 
-    function fillMobList(){
-        mobList  = [];
-        //  IDENTIFICA O QUE FOR MONSTRO NA GRID
-        for(let i = 0; i < grid.length; i++){
-            for(let j = 0; j < grid[0].length; j++){
-                if (grid[i][j] >= 20){
-                  mobList.push(new mob(i, j, grid[i][j]));
-                }
+    p1Balas = [],
+    effects = [],
 
-            }
-        }
+    // MONSTRO ----------------------------
+    mobList = [],
 
-        //  ESPECIFICA OS MONSTROS DE CADA ELEMENTO
-        for (var i = 0; i < mobList.length; i++){
-            switch (mobList[i].gridNumber){
-              case 21:
-                mobList[i] = new mob1(mobList[i].spawnI,mobList[i].spawnJ,mobList[i].gridNumber);
-                break;
-              case 22:
-                //mobList[i] = new mob2(mobList[i].spawnI,mobList[i].spawnJ,mobList[i].gridNumber);
-                break;
-
-              default:
-
-            }
-
-        }
-
-    }
-
-    function updateMobList(){
-
-    }
-
-    function drawMobList(){
-
-    }
-var
     // MAPAS --------------------------------
     tile = 70, // Tamanho do tile/quadrado da grade
 
-  grid =     [[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
-              [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
-              [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
-              [1,0,0,0,0,0,21,0,0,0,0,0,0,0,0,0,0,0,0,1],
-              [1,0,0,0,0,1,1,0,0,1,1,0,0,0,0,1,1,0,0,1],
-              [1,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,1],
-              [1,0,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1],
-              [1,0,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,1,1,1],
-              [1,0,0,0,0,0,1,0,0,0,1,1,0,0,0,0,1,1,1,1],
-              [1,0,0,0,0,0,0,0,0,1,1,1,0,0,0,1,1,1,1,1],
-              [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]],
+    grid =     [[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+                [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+                [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+                [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+                [1,0,0,0,0,1,1,1,0,0,1,1,0,0,0,1,1,0,0,1],
+                [1,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,1],
+                [1,0,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1],
+                [1,0,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,1,1,1],
+                [1,0,0,0,0,0,1,0,0,0,1,1,0,0,0,0,1,1,1,1],
+                [1,0,0,0,0,0,0,0,0,1,1,1,0,0,0,1,1,1,1,1],
+                [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]],
 
-  gridDraw = [[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
-              [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
-              [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
-              [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
-              [1,0,0,0,0,1,1,0,0,1,1,0,0,0,0,1,1,0,0,1],
-              [1,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,1],
-              [1,0,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1],
-              [1,0,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,1,1,1],
-              [1,0,0,0,0,0,0,0,0,0,1,1,0,0,0,0,1,1,1,1],
-              [1,0,0,0,0,0,0,0,0,1,1,1,0,0,0,1,1,1,1,1],
-              [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]],
+    gridDraw = [[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+                [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+                [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+                [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+                [1,0,0,0,0,1,1,0,0,1,1,0,0,0,0,1,1,0,0,1],
+                [1,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,1],
+                [1,0,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1],
+                [1,0,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,1,1,1],
+                [1,0,0,0,0,0,0,0,0,0,1,1,0,0,0,0,1,1,1,1],
+                [1,0,0,0,0,0,0,0,0,1,1,1,0,0,0,1,1,1,1,1],
+                [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]],
 
 
     // CAMPO DE VISÃO --------------------------
@@ -117,8 +86,33 @@ var
     mapWidth = gJ * tile,  // Comprimento, em pixels, do mapa todo
     mapHeight = gI * tile; // Altura, em pixels, do mapa todo
 
+// ---------------- INICIALIZACAO DO JOGO -------------------------------------------------------------------------------
+
+  // MONSTROS --------------------------------
+
+  function fillMobList(){
+    mobList.push(new girador(3, 4, 3, 1));
+
+    mobList.push(new thwomp(1, 5, 2));
+    mobList.push(new thwomp(1, 8, 8));
+
+    mobList.push(new morcego(2, 4, 2));
+
+    mobList.push(new vaievolta(9, 4, 3));
+  }
+
+  function updateMobList(){
+
+  }
+
+  function drawMobList(){
+
+  }
+
+
 
 // ---------------- UPDATE -------------------------------------------------------------------------------
+
 
 
   // COLISÕES --------------------------
@@ -129,12 +123,59 @@ var
   function controlPlayer(Player, Control){
     var accX, maxAccX, maxVelX, grav, floatGrav, maxAccY, jmpVel, maxVelY, floatTime, airFrames;
 
+
+    if(Player.iframes == 0){
+      for(var i = 0; i < mobList.length; i++){
+        if(rectCollision({x: Player.x -Player.width/2, y: Player.y -Player.height/2, width: Player.width, height: Player.height},
+        mobList[i])){
+          //perde hp
+          Player.iframes = 100;
+          if(Player.x -Player.width/2 < mobList[i].x)
+            Player.dxExt = -5;
+          else
+            Player.dxExt = 5;
+          if(Player.onGround){
+            Player.dyExt = -1;
+            Player.onGround = false;
+          }
+          break;
+        }
+
+      }
+    }
+    else if(Player.iframes >= 90){
+      Player.iframes--;
+      Player.accY = 0;
+      Player.dy = 0;
+    }
+    else{
+      Player.iframes--;
+      Player.dxExt = 0;
+      Player.dyExt = 0;
+    }
+
+
+    if(Control.shoot && Player.iframes < 90){
+      aux = 30;
+      Control.shoot = false;
+      if(Player.facingRight)
+        p1Balas.push({x: Player.x +Player.width/2, y: Player.y, radius: 10, dx:  20});
+      else
+        p1Balas.push({x: Player.x -Player.width/2, y: Player.y, radius: 10, dx: -20});
+
+      console.log(p1Balas.length);
+    }
+    else if(aux > 0){
+      aux--;
+    }
+
     // HORIZONTAL
     accX = 0.2; //accX por frame
     maxAccX = 2;
     maxVelX = 7.4;
 
-    if(Control.l){ // Se control.left estiver pressionado
+    if(Control.l && Player.iframes < 90){ // Se control.left estiver pressionado
+      Player.facingRight = false;
       if(p1.onGround == false)  // Modifica a velocidade do player1 no ar
         maxVelX = 5.5;
       else {
@@ -146,7 +187,8 @@ var
       if(Player.accX < -maxAccX)
         Player.accX = -maxAccX;
     }
-    else if(Control.r){// Se control.right estiver pressionado
+    else if(Control.r && Player.iframes < 90){// Se control.right estiver pressionado
+      Player.facingRight = true;
       if(p1.onGround == false)  // Modifica a velocidade do player1 no ar
         maxVelX = 5.3;
       else {
@@ -171,6 +213,9 @@ var
     // Atrito
     if(Player.accX == 0)
       Player.dx = 0;
+
+    Player.dx += Player.dxExt;
+
     //if(Math.abs(Player.dx) < 0.01)
     //  Player.dx = 0;
 
@@ -181,14 +226,14 @@ var
           // Coiote Jump: 48 frames
 
     airFrames = 0; // Quantidade de frames do player no ar
-    grav = 0.2; //gravidade AKA Aceleração da aceleração
-    floatGrav = 0.13; //gravidade quando UP esta pressionado AKA Aceleração da aceleração quando UP está pressionado
-    floatTime = 25; //por quanto tempo floatGrav dura (frames)
-    maxAccY = 0.6; //acc y max AKA Aceleração de verdade
-    jmpVel = -12.5; //velocidade do pulo
-    maxVelY = 15.5; //velocidade max
+      grav = 0.2; //gravidade AKA Aceleração da aceleração
+      floatGrav = 0.13; //gravidade quando UP esta pressionado AKA Aceleração da aceleração quando UP está pressionado
+      floatTime = 25; //por quanto tempo floatGrav dura (frames)
+      maxAccY = 0.6; //acc y max AKA Aceleração de verdade
+      jmpVel = -12.5; //velocidade do pulo
+      maxVelY = 15.5; //velocidade max
 
-    if(Control.u){
+    if(Control.u && Player.iframes < 90){
       if(Player.onGround){
         airFrames = 0;
         airFramesGlobal= 0; // Remover quando terminar de debuggar
@@ -230,21 +275,20 @@ var
         Player.accY = maxAccY;
     }
 
-    var bI, bJ;
-    bI = Math.floor(Player.y / tile);
-    bJ = Math.floor(Player.x / tile);
+    Player.i = Math.floor(Player.y / tile);
+    Player.j = Math.floor(Player.x / tile);
 
-    bJE = Math.floor((Player.x -Player.width/2) / tile);
-    bJD = Math.floor((Player.x +Player.width/2) / tile);
+    jE = Math.floor((Player.x -Player.width/2) / tile);
+    jD = Math.floor((Player.x +Player.width/2) / tile);
     if(!(Player.y + Player.height/2 + 1 > mapHeight ||
-        (Player.y + Player.height/2 == (bI+1) * tile && grid[bI+1][bJE] == 1) ||
-        (Player.y + Player.height/2 == (bI+1) * tile && grid[bI+1][bJD] == 1)))
+        (Player.y + Player.height/2 == (Player.i+1) * tile && grid[Player.i+1][jE] == 1) ||
+        (Player.y + Player.height/2 == (Player.i+1) * tile && grid[Player.i+1][jD] == 1)))
       Player.onGround = false;
 
     Player.dy += Player.accY;
     if(Player.dy > maxVelY)
       Player.dy = maxVelY;
-
+    Player.dy += Player.dyExt;
     ////////////////////////////////////////////////////////////////////
     ///COLISION
     ////////////////////////////////////////////////////////////////////
@@ -254,40 +298,6 @@ var
     var fPlayer;
     var collidedX, collidedY;
     collidedX = collidedY = false;
-    aux = [false, false, false, false, false, false, false, false];
-
-    // var px1, px2, px3, px4;
-    // px1 = {x: (bJ) * tile, y: (bI) * tile};
-    // px2 = {x: (bJ+1) * tile, y: (bI) * tile};
-    // px3 = {x: (bJ+1) * tile, y: (bI+1) * tile};
-    // px4 = {x: (bJ) * tile, y: (bI+1) * tile};
-    //
-    // var disX, disY;
-    // var aaa = true;
-    //
-    // if(Player.dx < 0){
-    //     if(Player.dy < 0){
-    //       disX = Math.abs((Player.x -Player.width/2) - px1.x);
-    //       disY = Math.abs((Player.y -Player.height/2) - px1.y);
-    //     }
-    //     else if(Player.dy > 0){
-    //       disX = Math.abs((Player.x -Player.width/2) - px4.x);
-    //       disY = Math.abs((Player.y +Player.height/2) - px4.y);
-    //     }
-    // }
-    // else if(Player.dx > 0){
-    //     if(Player.dy < 0){
-    //       disX = Math.abs((Player.x +Player.width/2) - px2.x);
-    //       disY = Math.abs((Player.y -Player.height/2) - px2.y);
-    //     }
-    //     else if(Player.dy > 0){
-    //       disX = Math.abs((Player.x +Player.width/2) - px3.x);
-    //       disY = Math.abs((Player.y +Player.height/2) - px3.y);
-    //     }
-    // }
-    //
-    // if(disX < disY)
-    //   aaa = false;
 
     //TRATAMENTO
 
@@ -299,57 +309,54 @@ var
 
     //BAIXO
     if(Player.dy >= 0){
-      if(rectCollision(fPlayer, {x: (bJ-1) * tile, y: (bI+1) * tile, width: tile, height: tile})
-      && grid[bI+1][bJ-1] == 1 && grid[bI][bJ-1] == 0){
+      if(rectCollision(fPlayer, {x: (Player.j-1) * tile, y: (Player.i+1) * tile, width: tile, height: tile})
+      && grid[Player.i+1][Player.j-1] == 1 && grid[Player.i][Player.j-1] == 0){
         Player.dy = 0;
-        Player.y = (bI+1) * tile - Player.height/2;
+        Player.y = (Player.i+1) * tile - Player.height/2;
         Player.dy = 0;
         Player.accY = 0;
         Player.onGround = true;
-        aux[6] = true;
+        Control.u = false;
       }
-      if(rectCollision(fPlayer, {x: (bJ) * tile, y: (bI+1) * tile, width: tile, height: tile})
-      && grid[bI+1][bJ] == 1){
+      if(rectCollision(fPlayer, {x: (Player.j) * tile, y: (Player.i+1) * tile, width: tile, height: tile})
+      && grid[Player.i+1][Player.j] == 1){
         Player.dy = 0;
-        Player.y = (bI+1) * tile - Player.height/2;
+        Player.y = (Player.i+1) * tile - Player.height/2;
         Player.dy = 0;
         Player.accY = 0;
         Player.onGround = true;
-        aux[6] = true;
+        Control.u = false;
       }
-      if(rectCollision(fPlayer, {x: (bJ+1) * tile, y: (bI+1) * tile, width: tile, height: tile})
-      && grid[bI+1][bJ+1] == 1 && grid[bI][bJ+1] == 0){
+      if(rectCollision(fPlayer, {x: (Player.j+1) * tile, y: (Player.i+1) * tile, width: tile, height: tile})
+      && grid[Player.i+1][Player.j+1] == 1 && grid[Player.i][Player.j+1] == 0){
         Player.dy = 0;
-        Player.y = (bI+1) * tile - Player.height/2;
+        Player.y = (Player.i+1) * tile - Player.height/2;
         Player.dy = 0;
         Player.accY = 0;
         Player.onGround = true;
-        aux[6] = true;
+        Control.u = false;
       }
     }
 
     //CIMA
     else if(Player.dy < 0){
-          if(rectCollision(fPlayer, {x: (bJ-1) * tile, y: (bI-1) * tile, width: tile, height: tile})
-          && grid[bI-1][bJ-1] == 1 && grid[bI][bJ-1] == 0){
+          if(rectCollision(fPlayer, {x: (Player.j-1) * tile, y: (Player.i-1) * tile, width: tile, height: tile})
+          && grid[Player.i-1][Player.j-1] == 1 && grid[Player.i][Player.j-1] == 0){
            Player.dy = 0;
-           Player.y = (bI) * tile + Player.height/2;
+           Player.y = (Player.i) * tile + Player.height/2;
            auxG = 0;
-           aux[1] = true;
           }
-          if(rectCollision(fPlayer, {x: (bJ) * tile, y: (bI-1) * tile, width: tile, height: tile})
-          && grid[bI-1][bJ] == 1){
+          if(rectCollision(fPlayer, {x: (Player.j) * tile, y: (Player.i-1) * tile, width: tile, height: tile})
+          && grid[Player.i-1][Player.j] == 1){
            Player.dy = 0;
-           Player.y = (bI) * tile + Player.height/2;
+           Player.y = (Player.i) * tile + Player.height/2;
            auxG = 0;
-           aux[1] = true;
           }
-          if(rectCollision(fPlayer, {x: (bJ+1) * tile, y: (bI-1) * tile, width: tile, height: tile})
-          && grid[bI-1][bJ+1] == 1 && grid[bI][bJ+1] == 0){
+          if(rectCollision(fPlayer, {x: (Player.j+1) * tile, y: (Player.i-1) * tile, width: tile, height: tile})
+          && grid[Player.i-1][Player.j+1] == 1 && grid[Player.i][Player.j+1] == 0){
            Player.dy = 0;
-           Player.y = (bI) * tile + Player.height/2;
+           Player.y = (Player.i) * tile + Player.height/2;
            auxG = 0;
-           aux[1] = true;
           }
         }
 
@@ -357,43 +364,43 @@ var
 
     fPlayer = {x: Player.x + Player.dx -Player.width/2,
       y: Player.y + Player.dy -Player.height/2,
-       width: Player.width, height: Player.height};
+      width: Player.width, height: Player.height};
 
     //DIREITA
     if(Player.dx > 0){
-      if(rectCollision(fPlayer, {x: (bJ+1) * tile, y: (bI-1) * tile, width: tile, height: tile})
-      && grid[bI-1][bJ+1] == 1 && grid[bI-1][bJ] == 0){
+      if(rectCollision(fPlayer, {x: (Player.j+1) * tile, y: (Player.i-1) * tile, width: tile, height: tile})
+      && grid[Player.i-1][Player.j+1] == 1 && grid[Player.i-1][Player.j] == 0){
         Player.dx = 0;
-        Player.x = (bJ+1) * tile - Player.width/2;
+        Player.x = (Player.j+1) * tile - Player.width/2;
       }
-      if(rectCollision(fPlayer, {x: (bJ+1) * tile, y: (bI) * tile, width: tile, height: tile})
-      && grid[bI][bJ+1] == 1){
+      if(rectCollision(fPlayer, {x: (Player.j+1) * tile, y: (Player.i) * tile, width: tile, height: tile})
+      && grid[Player.i][Player.j+1] == 1){
         Player.dx = 0;
-        Player.x = (bJ+1) * tile - Player.width/2;
+        Player.x = (Player.j+1) * tile - Player.width/2;
       }
-      if(rectCollision(fPlayer, {x: (bJ+1) * tile, y: (bI+1) * tile, width: tile, height: tile})
-      && grid[bI+1][bJ+1] == 1 && grid[bI+1][bJ] == 0){
+      if(rectCollision(fPlayer, {x: (Player.j+1) * tile, y: (Player.i+1) * tile, width: tile, height: tile})
+      && grid[Player.i+1][Player.j+1] == 1 && grid[Player.i+1][Player.j] == 0){
         Player.dx = 0;
-        Player.x = (bJ+1) * tile - Player.width/2;
+        Player.x = (Player.j+1) * tile - Player.width/2;
       }
     }
 
     //ESQUERDA
     else if(Player.dx < 0){
-      if(rectCollision(fPlayer, {x: (bJ-1) * tile, y: (bI-1) * tile, width: tile, height: tile})
-      && grid[bI-1][bJ-1] == 1 && grid[bI-1][bJ] == 0){
+      if(rectCollision(fPlayer, {x: (Player.j-1) * tile, y: (Player.i-1) * tile, width: tile, height: tile})
+      && grid[Player.i-1][Player.j-1] == 1 && grid[Player.i-1][Player.j] == 0){
         Player.dx = 0;
-        Player.x = (bJ) * tile + Player.width/2;
+        Player.x = (Player.j) * tile + Player.width/2;
       }
-      if(rectCollision(fPlayer, {x: (bJ-1) * tile, y: (bI) * tile, width: tile, height: tile})
-      && grid[bI][bJ-1] == 1){
+      if(rectCollision(fPlayer, {x: (Player.j-1) * tile, y: (Player.i) * tile, width: tile, height: tile})
+      && grid[Player.i][Player.j-1] == 1){
         Player.dx = 0;
-        Player.x = (bJ) * tile + Player.width/2;
+        Player.x = (Player.j) * tile + Player.width/2;
       }
-      if(rectCollision(fPlayer, {x: (bJ-1) * tile, y: (bI+1) * tile, width: tile, height: tile})
-      && grid[bI+1][bJ-1] == 1 && grid[bI+1][bJ] == 0){
+      if(rectCollision(fPlayer, {x: (Player.j-1) * tile, y: (Player.i+1) * tile, width: tile, height: tile})
+      && grid[Player.i+1][Player.j-1] == 1 && grid[Player.i+1][Player.j] == 0){
         Player.dx = 0;
-        Player.x = (bJ) * tile + Player.width/2;
+        Player.x = (Player.j) * tile + Player.width/2;
       }
     }
 
@@ -421,6 +428,7 @@ var
       Player.dy = 0;
       Player.accY = 0;
       Player.onGround = true;
+      p1Control.u = false;
     }
     else if(Player.y - Player.height/2 < 0){
       Player.y = Player.height/2;
@@ -434,28 +442,42 @@ var
     ctx.fillRect(Player.x -Player.width/2 -offset.x, Player.y -Player.height/2 -offset.y, Player.width, Player.height);
 
     ctx.fillStyle = "#000";
-    ctx.beginPath();
-    ctx.arc(Player.x -offset.x +5*Player.accX, Player.y -offset.y, 5, 0, 2*Math.PI, false);
-    ctx.fill();
+    if(Player.facingRight)
+      ctx.fillRect(Player.x +Player.width/2 -offset.x, Player.y -10 -offset.y, -30, 10);
+    else
+      ctx.fillRect(Player.x -Player.width/2 -offset.x, Player.y -10 -offset.y, 30, 10);
+
+    ctx.fillStyle = "#FFF";
+    ctx.globalAlpha = (1/30) * aux;
+    if(Player.facingRight)
+      ctx.fillRect(Player.x +Player.width/2 -offset.x , Player.y -10 -offset.y -2, -30 -4, 10 +4);
+    else
+      ctx.fillRect(Player.x -Player.width/2 -offset.x , Player.y -10 -offset.y -2, 30 +4, 10 +4);
+    ctx.globalAlpha = 1;
+
+    // ctx.fillStyle = "#000";
+    // ctx.beginPath();
+    // ctx.arc(Player.x -offset.x +5*Player.accX, Player.y -offset.y, 5, 0, 2*Math.PI, false);
+    // ctx.fill();
   }
 
   function drawGrid(){
-    ctx.globalAlpha = 1/5;
-    ctx.lineWidth = 2;
-    for(var i = 0; i < gI+1; ++i){
-      ctx.beginPath();
-      ctx.moveTo(0 -offset.x, i*tile -offset.y);
-      ctx.lineTo(mapWidth -offset.x, i*tile -offset.y);
-      ctx.stroke();
-    }
-
-    for(var j = 0; j < gJ+1; ++j){
-      ctx.beginPath();
-      ctx.moveTo(j*tile -offset.x, 0 -offset.y);
-      ctx.lineTo(j*tile -offset.x, mapHeight -offset.y);
-      ctx.stroke();
-    }
-    ctx.globalAlpha = 1;
+    // ctx.globalAlpha = 1/5;
+    // ctx.lineWidth = 2;
+    // for(var i = 0; i < gI+1; ++i){
+    //   ctx.beginPath();
+    //   ctx.moveTo(0 -offset.x, i*tile -offset.y);
+    //   ctx.lineTo(mapWidth -offset.x, i*tile -offset.y);
+    //   ctx.stroke();
+    // }
+    //
+    // for(var j = 0; j < gJ+1; ++j){
+    //   ctx.beginPath();
+    //   ctx.moveTo(j*tile -offset.x, 0 -offset.y);
+    //   ctx.lineTo(j*tile -offset.x, mapHeight -offset.y);
+    //   ctx.stroke();
+    // }
+    // ctx.globalAlpha = 1;
 
     ctx.fillStyle = 'rgb(30, 30, 200)';
     for(var i = 0; i < gI; i++){
@@ -472,20 +494,25 @@ var
 // ----------- MANIPULAÇÃO DE TECLAS ----------------------------------------------------------------------
 
   function keyDown(evt){
-    console.log(evt.keyCode);
-    switch(evt.keyCode){
-      case p1Keys.u:
-        p1Control.u = true;
-        break;
-      case p1Keys.l:
-        p1Control.l = true;
-        break;
-      case p1Keys.d:
-        p1Control.d = true;
-        break;
-      case p1Keys.r:
-        p1Control.r = true;
-        break;
+    if(!evt.repeat){
+      //console.log(evt.keyCode);
+      switch(evt.keyCode){
+        case p1Keys.u:
+          p1Control.u = true;
+          break;
+        case p1Keys.l:
+          p1Control.l = true;
+          break;
+        case p1Keys.d:
+          p1Control.d = true;
+          break;
+        case p1Keys.r:
+          p1Control.r = true;
+          break;
+        case p1Keys.shoot:
+          p1Control.shoot = true;
+          break;
+      }
     }
   }
 
@@ -502,6 +529,9 @@ var
         break;
       case p1Keys.r:
         p1Control.r = false;
+        break;
+      case p1Keys.shoot:
+        p1Control.shoot = false;
         break;
     }
   }
@@ -535,19 +565,65 @@ var
     // vai sair daqui em breve
     fillMobList();
 
-
+    lastCall = performance.now();
     run();
   }
 
   function run(){
     update();
     render();
+
+    var delta = (Date.now() - lastCall)/1000;
+    lastCall = Date.now();
+    if(frames == 0)
+      fps = 1/delta;
+
     window.requestAnimationFrame(run);
   }
 
   function update(){
     controlPlayer(p1, p1Control);
     boundPlayer(p1);
+
+    for(var i = 0; i < p1Balas.length; i++){
+      p1Balas[i].x += p1Balas[i].dx;
+      if(!circleRectCollision(p1Balas[i], {x: offset.x, y: offset.y, width: width, height: height})){
+        p1Balas.splice(i, 1);
+        i--;
+        break;
+      }
+
+      if(grid[Math.floor(p1Balas[i].y / tile)][Math.floor(p1Balas[i].x / tile)] == 1){
+        if(p1Balas[i].dx > 0)
+          effects.push({x: Math.floor(p1Balas[i].x / tile) *tile, y: p1Balas[i].y, frames: 10});
+        else
+          effects.push({x: (Math.floor(p1Balas[i].x / tile) +1) *tile, y: p1Balas[i].y, frames: 10});
+
+        p1Balas.splice(i, 1);
+        i--;
+        break;
+      }
+
+      for(var j = 0; j < mobList.length; j++){
+        if(circleRectCollision(p1Balas[i], mobList[j])){
+          mobList[j].onHit();
+          if(mobList[j].hp <= 0){
+            effects.push({x: mobList[j].x +mobList[j].width/2, y: mobList[j].y +mobList[j].height/2, frames: 20});
+            mobList.splice(j, 1);
+          }
+          p1Balas.splice(i, 1);
+          i--;
+          break;
+        }
+      }
+
+    }
+
+    frames = frames < 30 ? ++frames : 0;
+
+    //UPDATE MOBLIST
+    for(i = 0; i < mobList.length; i++)
+      mobList[i].update();
 
   	//ZOOM
     //zoom = 1;
@@ -561,14 +637,11 @@ var
     if(offset.y < 0) offset.y = 0;
     else if(offset.y > mapHeight -height) offset.y = mapHeight -height;
 
-    for(var i = 0; i < mobList.length; i++)
-      mobList[i].update();
-
   }
 
   function render(){
     //Tela Branca
-    ctx.fillStyle = "#FFF";
+    ctx.fillStyle = "#336";
     ctx.fillRect(0, 0, width, height);
 
     //Salva as configuraçoes atuais do context
@@ -579,105 +652,91 @@ var
     //progressiva (0.5 * 0.5 = 0.25))
     ctx.scale(zoom, zoom);
 
-    //Desenha o player
-    ctx.fillStyle = "#F00";
-    drawPlayer(p1);
-
-    //Desenha a grid
-    ctx.fillStyle = "#000";
-    drawGrid();
-
+    //DRAW MOBLIST
     for(var i = 0; i < mobList.length; i++)
       mobList[i].draw();
 
-
-    ////////////////////////
-    //DEBUGGING
-    //////////////////////////
-
+    //Desenha o player
     ctx.fillStyle = "#F00";
+    if(p1.iframes%4 == 0)
+      drawPlayer(p1);
 
-    //I e J do Player
-    var bI, bJ;
-    bI = Math.floor(p1.y / tile);
-    bJ = Math.floor(p1.x / tile);
+    for(i = 0; i < p1Balas.length; i++){
+      ctx.fillStyle = "#05a5ff";
+      ctx.beginPath();
+      ctx.arc(p1Balas[i].x -offset.x, p1Balas[i].y -offset.y, p1Balas[i].radius, 0, 2*Math.PI, false);
+        ctx.arc(p1Balas[i].x -offset.x -(Math.abs(p1Balas[i].dx)/p1Balas[i].dx)*p1Balas[i].radius, p1Balas[i].y -offset.y, p1Balas[i].radius/2, 0, 2*Math.PI, false);
+      ctx.fill();
+    }
 
-    var px1, px2, px3, px4;
-    px1 = {x: (bJ) * tile, y: (bI) * tile};
-    px2 = {x: (bJ+1) * tile, y: (bI) * tile};
-    px3 = {x: (bJ+1) * tile, y: (bI+1) * tile};
-    px4 = {x: (bJ) * tile, y: (bI+1) * tile};
+    for(i = 0; i < effects.length; i++){
 
-    ctx.fillStyle = "#F00";
-    ctx.beginPath();
-    ctx.arc(px1.x -offset.x, px1.y -offset.y, 5, 0, 2*Math.PI, false);
-    ctx.fill();
+      effects[i].frames--;
+      if(effects[i].frames == 0){
+        effects.splice(i, 1);
+        i--;
+        break;
+      }
 
-    ctx.fillStyle = "#0F0";
-    ctx.beginPath();
-    ctx.arc(px2.x -offset.x, px2.y -offset.y, 5, 0, 2*Math.PI, false);
-    ctx.fill();
+      ctx.strokeStyle = "#05a5ff";
+      ctx.lineWidth = 10;
+      ctx.beginPath();
+      ctx.arc(effects[i].x -offset.x, effects[i].y -offset.y, 2*(10 -effects[i].frames%10), 0, 2*Math.PI, false);
+      ctx.stroke();
+    }
 
-    ctx.fillStyle = "#00F";
-    ctx.beginPath();
-    ctx.arc(px3.x -offset.x, px3.y -offset.y, 5, 0, 2*Math.PI, false);
-    ctx.fill();
+    //Desenha a grid
+    ctx.fillStyle = "#000";
+    ctx.strokeStyle = "#000";
+    drawGrid();
 
-    ctx.fillStyle = "#FF0";
-    ctx.beginPath();
-    ctx.arc(px4.x -offset.x, px4.y -offset.y, 5, 0, 2*Math.PI, false);
-    ctx.fill();
+    //DEBUGGING-----------------------------------------------------------------
 
     //TILES DE COLISAO
     //[0][1][2]
     //[3][X][4]
     //[5][6][7]
 
-    // if(aux[0])
-    //   ctx.fillRect((bJ-1) * tile -offset.x, (bI-1) * tile -offset.y, tile, tile);
-    // if(aux[1])
-    //   ctx.fillRect((bJ) * tile -offset.x, (bI-1) * tile -offset.y, tile, tile);
-    // if(aux[2])
-    //   ctx.fillRect((bJ+1) * tile -offset.x, (bI-1) * tile -offset.y, tile, tile);
-    // if(aux[3])
-    //   ctx.fillRect((bJ-1) * tile -offset.x, (bI) * tile -offset.y, tile, tile);
-    // if(aux[4])
-    //   ctx.fillRect((bJ+1) * tile -offset.x, (bI) * tile -offset.y, tile, tile);
-    // if(aux[5])
-    //   ctx.fillRect((bJ-1) * tile -offset.x, (bI+1) * tile -offset.y, tile, tile);
-    // if(aux[6])
-    //   ctx.fillRect((bJ) * tile -offset.x, (bI+1) * tile -offset.y, tile, tile);
-    // if(aux[7])
-    //   ctx.fillRect((bJ+1) * tile -offset.x, (bI+1) * tile -offset.y, tile, tile);
-
     //volta para as configuraçoes salvas
     ctx.restore();
 
-
     ctx.fillStyle = "#F00";
-    //X E Y DO PLAYER
-    ctx.fillText("X: " + p1.x.toFixed(2) + " Y: " + p1.y.toFixed(2), 25, 25);
+      //X E Y DO PLAYER
+      ctx.fillText("X: " + p1.x.toFixed(2) + " Y: " + p1.y.toFixed(2), 25, 25);
 
-    //DX E DY DO PLAYER
-    ctx.fillText("dX: " + p1.dx.toFixed(2) + " dY: " + p1.dy.toFixed(2), 25, 45);
+      //DX E DY DO PLAYER
+      ctx.fillText("dX: " + p1.dx.toFixed(2) + " dY: " + p1.dy.toFixed(2), 25, 45);
 
-    //ACCX E ACCY DO PLAYER
-    ctx.fillText("accX: " + p1.accX.toFixed(2) + " accY: " + p1.accY.toFixed(2), 25, 65);
+      //ACCX E ACCY DO PLAYER
+      ctx.fillText("accX: " + p1.accX.toFixed(2) + " accY: " + p1.accY.toFixed(2), 25, 65);
 
-    //I E J DO PLAYER
-    ctx.fillText("I: " + bI + " J: " + bJ, 25, 85);
+      //I E J DO PLAYER
+      ctx.fillText("I: " + p1.i + " J: " + p1.j, 25, 85);
 
-    //SE O PLAYER ESTA NO CHAO OU NAO
-    ctx.fillText("gnd: " + p1.onGround, 25, 105);
+      //SE O PLAYER ESTA NO CHAO OU NAO
+      ctx.fillText("gnd: " + p1.onGround, 25, 105);
 
-    //OFFSET X E OFFSET Y
-    ctx.fillText("offX: " + offset.x.toFixed(2) + " offY: " + offset.y.toFixed(2), 25, 125);
+      //OFFSET X E OFFSET Y
+      ctx.fillText("offX: " + offset.x.toFixed(2) + " offY: " + offset.y.toFixed(2), 25, 125);
 
-    //COIOTE TIME
-    ctx.fillText("Aux: " + auxG, 25, 145);
+      //COIOTE TIME
+      ctx.fillText("Aux: " + auxG, 25, 145);
 
-    //FRAMES NO AR
-    ctx.fillText("Air Frames " + airFramesGlobal, 25, 165);
+      //FRAMES NO AR
+      ctx.fillText("Air Frames " + airFramesGlobal, 25, 165);
+
+      //FPS
+      ctx.fillText("FPS: " + fps.toFixed(0), 25, 185);
+
+      //IFRAMES
+      ctx.fillText("iframes: " + p1.iframes, 25, 205);
+
+    //Fade
+    // ctx.globalCompositeOperation = "saturation";
+    // ctx.fillStyle = "hsl(0, 100%, 50%)";  // saturation at 100%
+    // ctx.fillRect(0, 0, width, height);  // apply the comp filter
+    // ctx.globalCompositeOperation = "source-over";  // restore default comp
+
   }
 
   main();

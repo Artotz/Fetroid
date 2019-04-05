@@ -29,6 +29,8 @@ function area_01(){
 
     mobList = [];
     this.salaAtual.fillMobList();
+	this.salaAtual.fillUpgradeList();
+	
   }
 
   this.draw = function(){
@@ -89,6 +91,15 @@ function sala_01(){
      mobList.push(new morcego(9, 1, 0));
     // mobList.push(new crazyJ(3, 6, 2));
   }
+  
+  this.fillUpgradeList =  function(){
+	  	  upgradeList.push(new upgradeVida(9, 10, "hpUp"));
+	  upgradeList.push(new upgradeVida(9, 12, "hpUp"));
+	  upgradeList.push(new upgradeVida(9, 8, "hpUp"));
+	  upgradeList.push(new upgradeVida(9, 6, "hpUp"));
+  }
+  
+  
 }
 
 function sala_02(){
@@ -106,7 +117,14 @@ function sala_02(){
         [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]],
 
   this.fillMobList = function(){
-
+		
+  }
+  
+    this.fillUpgradeList =  function(){
+	  upgradeList.push(new upgradeVida(9, 10, "hpUp"));
+	  upgradeList.push(new upgradeVida(9, 12, "hpUp"));
+	  upgradeList.push(new upgradeVida(9, 8, "hpUp"));
+	  upgradeList.push(new upgradeVida(9, 6, "hpUp"));
   }
 
 }
@@ -127,6 +145,10 @@ function sala_03(){
 
   this.fillMobList = function(){
 
+  }
+  
+    this.fillUpgradeList =  function(){
+	  upgradeList.push(new upgradeVida(10, 10, "hpUp"));
   }
 
   this.checkTeleport = function(){

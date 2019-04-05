@@ -7,6 +7,7 @@
   <script type="text/javascript" src="scripts/logicalFunctions.js"></script>
   <script type="text/javascript" src="scripts/area_01.js"></script>
   <script type="text/javascript" src="scripts/monsters.js"></script>
+  <script type="text/javascript" src="scripts/upgrades.js"></script>
 </head>
 <body bgcolor = "#36F" oncontextmenu = "return false">
 <script>
@@ -36,14 +37,18 @@
           // Possui Struct, botões e controles.
           // Importante: "x" & "y" não são coordenadas da ponta superior esquerda, mas sim do centro da hitbox.
           // Para pegar coordenadas da ponta superior esquerda, deve-se fazer "x - p1.width"
-
+	
+	//Upgrades que impactam em mecânicas
+	upgradesMetroidvania = {doubleJump: false},
+	
+	//Lista de upgrades presentes em uma sala. Estes são mais simples e tendem a ser como incrementos de hpmax.
+	upgradeList = [];
+	
     p1 = {x: 100, y: 100, width: 50, height: 50, dx: 0, dy: 0, dxExt: 0, dyExt: 0, accX: 0, accY: 0,
-      onGround: false, facingRight: true, iframes: 0, i: 0, j: 0, hp: 10},
+      onGround: false, facingRight: true, iframes: 0, i: 0, j: 0, hp: 10, hpMax: 10},
 
     p1Keys = {u: 87, l: 65, d: 83, r: 68, shoot: 188},
     p1Control = {u: false, l: false, d: false, r: false, shoot: false},
-
-    upgrades = {doubleJump: false},
 
     allyBullets = [],
     enemyBullets = [],
@@ -67,10 +72,6 @@
 // ---------------- INICIALIZACAO DO JOGO -------------------------------------------------------------------------------
 
   // MONSTROS --------------------------------
-
-  function updateMobList(){
-
-  }
 
   function drawMobList(){
     //DRAW MOBLIST
@@ -666,7 +667,7 @@
     ctx.fillStyle = "#666";
     var p = 7;
     var wid = 10;
-    ctx.fillRect(25 -(p), 20 -(p), wid +(2*p) +(wid+3)*(10-1), 25 +(2*p));
+    ctx.fillRect(25 -(p), 20 -(p), wid +(2*p) +(wid+3)*(p1.hpMax-1), 25 +(2*p));
     ctx.fillRect(25 -(p) -p, 20 -(p) +(25 +(2*p))/2 -p, p, 2*p);
 
     if(p1.iframes > 0){
@@ -920,6 +921,11 @@
       else
         mobList[i].deadUpdate();
     }
+	
+	//UPDATE UPGRADES
+	for(i = 0; i < upgradeList.length; i++){
+        upgradeList[i].update();
+    }
 
   	//ZOOM
     zoom = 1;
@@ -948,7 +954,13 @@
     //progressiva (0.5 * 0.5 = 0.25))
     //ctx.scale(zoom, zoom);
 
+	//DRAW MOBLIST
     drawMobList();
+	
+	//DRAW UPGRADES
+	for(var i = 0; i < upgradeList.length; i++){
+      upgradeList[i].draw();
+	}
 
     //Desenha o player
     ctx.fillStyle = "rgb(0, 70, 190)";
@@ -964,7 +976,7 @@
 
     //volta para as configuraçoes salvas
     //ctx.restore();
-
+	
     drawFade();
 
     debug();

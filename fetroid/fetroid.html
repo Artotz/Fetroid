@@ -20,7 +20,9 @@
     auxHP = 0,
     fade = {value: 0, maxValue: 150, in: true},
     area = new area_01(),
-    pulosExtras = 1, pulaNovamente = false,
+    pulosExtras = 1,
+    pulaNovamente = false,
+    auxSpawn = {x: 0, y: 0},
 
     auxFade,
 
@@ -41,6 +43,7 @@
       onGround: false, facingRight: true, iframes: 0, i: 0, j: 0, hp: 10},
 
     p1Keys = {u: 87, l: 65, d: 83, r: 68, shoot: 188},
+    // p1Keys = {u: 90, l: 37, d: 40, r: 39, shoot: 88},
     p1Control = {u: false, l: false, d: false, r: false, shoot: false},
 
     upgrades = {doubleJump: false},
@@ -69,6 +72,87 @@
   // MONSTROS --------------------------------
 
   function updateMobList(){
+    //BALAS ALIADAS
+    for(var i = 0; i < allyBullets.length; i++){
+      allyBullets[i].x += allyBullets[i].dx;
+
+      //SAIU DA TELA
+      if(!circleRectCollision(allyBullets[i], {x: offset.x, y: offset.y, width: width, height: height})){
+        allyBullets.splice(i, 1);
+        i--;
+        break;
+      }
+
+      //BATEU NA PAREDE
+      if(area.salaAtual.grid[Math.floor(allyBullets[i].y / tile)][Math.floor(allyBullets[i].x / tile)] == 1){
+        if(allyBullets[i].dx > 0)
+          effects.push({x: Math.floor(allyBullets[i].x / tile) *tile, y: allyBullets[i].y, frames: 10, type: 0});
+        else
+          effects.push({x: (Math.floor(allyBullets[i].x / tile) +1) *tile, y: allyBullets[i].y, frames: 10, type: 0});
+
+        allyBullets.splice(i, 1);
+        i--;
+        break;
+      }
+
+      //BATEU NUM MONSTRO
+      for(var j = 0; j < mobList.length; j++){
+        if(circleRectCollision(allyBullets[i], mobList[j]) && (mobList[j].hp > 0)){
+          mobList[j].onHit();
+          if(mobList[j].hp <= 0){
+            //effects.push({x: mobList[j].x +mobList[j].width/2, y: mobList[j].y +mobList[j].height/2, frames: 10, type: 1});
+            effects.push({mob: mobList[j], frames: 10, type: 1});
+            mobList[j].dy = 0;
+            //mobList.splice(j, 1);
+          }
+          else{
+            if(allyBullets[i].x < mobList[j].x +mobList[j].width/2)
+              effects.push({x: mobList[j].x, y: allyBullets[i].y, frames: 10, type: 0});
+            else
+              effects.push({x: mobList[j].x +mobList[j].width, y: allyBullets[i].y, frames: 10, type: 0});
+          }
+
+          allyBullets.splice(i, 1);
+          i--;
+          break;
+        }
+      }
+
+    }
+
+    //BALAS INIMIGAS
+    for(var i = 0; i < enemyBullets.length; i++){
+      enemyBullets[i].x += enemyBullets[i].dx;
+      enemyBullets[i].y += enemyBullets[i].dy;
+
+      //SAIU DA TELA
+      if(!circleRectCollision(enemyBullets[i], {x: offset.x, y: offset.y, width: width, height: height})){
+        enemyBullets.splice(i, 1);
+        i--;
+        break;
+      }
+
+      //BATEU NA PAREDE
+      if(area.salaAtual.grid[Math.floor(enemyBullets[i].y / tile)][Math.floor(enemyBullets[i].x / tile)] == 1){
+        // if(enemyBullets[i].dx > 0)
+        //   effects.push({x: Math.floor(enemyBullets[i].x / tile) *tile, y: enemyBullets[i].y, frames: 10});
+        // else
+        //   effects.push({x: (Math.floor(enemyBullets[i].x / tile) +1) *tile, y: enemyBullets[i].y, frames: 10});
+
+        enemyBullets.splice(i, 1);
+        i--;
+        break;
+      }
+
+    }
+
+    //UPDATE MOBLIST
+    for(i = 0; i < mobList.length; i++){
+      if(mobList[i].hp > 0)
+        mobList[i].update();
+      else
+        mobList[i].deadUpdate();
+    }
 
   }
 
@@ -347,6 +431,33 @@
       Player.dyExt = 0;
     }
 
+    //MORTE DO PLAYER-----------------------------------------------------------
+    if(Player.hp <= 0){
+      //LIGA O FADE OUT
+      fade.in = false;
+
+      //ESPERA CHEGAR NO MAXIMO
+      if(fade.value == fade.maxValue){
+        //RESETA O PLAYER
+        Player.dx = Player.dy = Player.dxExt = Player.dyExt = Player.accX = Player.accY = Player.iframes = 0;
+        Player.facingRight = true;
+        Player.x = auxSpawn.x;
+        Player.y = auxSpawn.y;
+        Player.hp = 10;
+        auxHP = 0;
+
+        //RESETA A SALA ATUAL
+        area.mudarSala(area.salaAtual.id);
+
+        //RESETA FADE E FRAMES
+        fade.in = true;
+        frames = 0;
+      }
+
+      //IMPEDE OS INPUT DO PLAYER
+      return;
+    }
+
 
     // -------------------------------------------- CONTROLE  ------------------------------------------------------------------------------------------
     // TIRO ------------------------------------------------------------------------
@@ -549,6 +660,20 @@
     }
   }
 
+  function setOffset(){
+    //ZOOM
+    zoom = 1;
+
+  	offset.x = (-(1/zoom)*width/2 + p1.x -p1.width/2);
+  	offset.y = (-(1/zoom)*height/2 + p1.y -p1.height/2);
+
+    if(offset.x < 0) offset.x = 0;
+    else if(offset.x > mapWidth -width) offset.x = mapWidth -width;
+
+    if(offset.y < 0) offset.y = 0;
+    else if(offset.y > mapHeight -height) offset.y = mapHeight -height;
+  }
+
 // ---------------- DRAW -------------------------------------------------------
 
   function drawPlayer(Player){
@@ -732,7 +857,7 @@
 
   function keyDown(evt){
     if(!evt.repeat){
-      //console.log(evt.keyCode);
+      console.log(evt.keyCode);
       switch(evt.keyCode){
         case p1Keys.u:
           p1Control.u = true;
@@ -821,13 +946,17 @@
   function update(){
     frames++;
 
+    if(frames == 1){
+      auxSpawn = {x: p1.x, y: p1.y};
+    }
+
     controlPlayer(p1, p1Control);
     boundPlayer(p1);
 
     if(area.salaAtual.grid[p1.i][p1.j].sala != undefined){
       fade.in = false;
 
-      if(fade.value == fade.maxValue){  
+      if(fade.value == fade.maxValue){
         //NESSE X E Y
         p1.x = (area.salaAtual.grid[p1.i][p1.j].playerJ)   *tile +tile/2;
         p1.y = (area.salaAtual.grid[p1.i][p1.j].playerI+1) *tile -p1.height/2;
@@ -836,102 +965,14 @@
         area.mudarSala(area.salaAtual.grid[p1.i][p1.j].sala);
 
         fade.in = true;
-      }
-    }
-
-    //BALAS ALIADAS
-    for(var i = 0; i < allyBullets.length; i++){
-      allyBullets[i].x += allyBullets[i].dx;
-
-      //SAIU DA TELA
-      if(!circleRectCollision(allyBullets[i], {x: offset.x, y: offset.y, width: width, height: height})){
-        allyBullets.splice(i, 1);
-        i--;
-        break;
-      }
-
-      //BATEU NA PAREDE
-      if(area.salaAtual.grid[Math.floor(allyBullets[i].y / tile)][Math.floor(allyBullets[i].x / tile)] == 1){
-        if(allyBullets[i].dx > 0)
-          effects.push({x: Math.floor(allyBullets[i].x / tile) *tile, y: allyBullets[i].y, frames: 10, type: 0});
-        else
-          effects.push({x: (Math.floor(allyBullets[i].x / tile) +1) *tile, y: allyBullets[i].y, frames: 10, type: 0});
-
-        allyBullets.splice(i, 1);
-        i--;
-        break;
-      }
-
-      //BATEU NUM MONSTRO
-      for(var j = 0; j < mobList.length; j++){
-        if(circleRectCollision(allyBullets[i], mobList[j]) && (mobList[j].hp > 0)){
-          mobList[j].onHit();
-          if(mobList[j].hp <= 0){
-            //effects.push({x: mobList[j].x +mobList[j].width/2, y: mobList[j].y +mobList[j].height/2, frames: 10, type: 1});
-            effects.push({mob: mobList[j], frames: 10, type: 1});
-            mobList[j].dy = 0;
-            //mobList.splice(j, 1);
-          }
-          else{
-            if(allyBullets[i].x < mobList[j].x +mobList[j].width/2)
-              effects.push({x: mobList[j].x, y: allyBullets[i].y, frames: 10, type: 0});
-            else
-              effects.push({x: mobList[j].x +mobList[j].width, y: allyBullets[i].y, frames: 10, type: 0});
-          }
-
-          allyBullets.splice(i, 1);
-          i--;
-          break;
-        }
+        frames = 0;
       }
 
     }
 
-    //BALAS INIMIGAS
-    for(var i = 0; i < enemyBullets.length; i++){
-      enemyBullets[i].x += enemyBullets[i].dx;
-      enemyBullets[i].y += enemyBullets[i].dy;
+    updateMobList();
 
-      //SAIU DA TELA
-      if(!circleRectCollision(enemyBullets[i], {x: offset.x, y: offset.y, width: width, height: height})){
-        enemyBullets.splice(i, 1);
-        i--;
-        break;
-      }
-
-      //BATEU NA PAREDE
-      if(area.salaAtual.grid[Math.floor(enemyBullets[i].y / tile)][Math.floor(enemyBullets[i].x / tile)] == 1){
-        // if(enemyBullets[i].dx > 0)
-        //   effects.push({x: Math.floor(enemyBullets[i].x / tile) *tile, y: enemyBullets[i].y, frames: 10});
-        // else
-        //   effects.push({x: (Math.floor(enemyBullets[i].x / tile) +1) *tile, y: enemyBullets[i].y, frames: 10});
-
-        enemyBullets.splice(i, 1);
-        i--;
-        break;
-      }
-
-    }
-
-    //UPDATE MOBLIST
-    for(i = 0; i < mobList.length; i++){
-      if(mobList[i].hp > 0)
-        mobList[i].update();
-      else
-        mobList[i].deadUpdate();
-    }
-
-  	//ZOOM
-    zoom = 1;
-
-  	offset.x = (-(1/zoom)*width/2 + p1.x -p1.width/2);
-  	offset.y = (-(1/zoom)*height/2 + p1.y -p1.height/2);
-
-    if(offset.x < 0) offset.x = 0;
-    else if(offset.x > mapWidth -width) offset.x = mapWidth -width;
-
-    if(offset.y < 0) offset.y = 0;
-    else if(offset.y > mapHeight -height) offset.y = mapHeight -height;
+  	setOffset();
 
   }
 

@@ -4,7 +4,7 @@ class mob {
       this.spawnI = spawnI;
       this.spawnJ = spawnJ;
 
-      this.dmg = 2;
+      this.dmg = 10;
 
       this.x;
       this.y;
@@ -114,22 +114,28 @@ class crazyJ extends mob{
     ctx.fillStyle = "rgb(140, 14, 14)";
     if(this.invul%2 == 0){
       ctx.fillRect(this.x -offset.x, this.y -offset.y, this.width, this.height);
+
+      // OLHO
+      ctx.fillStyle = "rgb(255, 255, 255)";
+      ctx.beginPath();
+      ctx.arc(this.x + this.width/2 - offset.x, this.y +this.height/2 -offset.y, 12, 0, 2*Math.PI);
+      ctx.fill();
+
+      ctx.fillStyle = "rgb(140, 14, 14)";
+
+      //PUPILA
+      if(this.hp > 0){
+        ctx.beginPath();
+        ctx.arc(this.x + this.width/2 + 4*Math.sin(frames) - offset.x, this.y +this.height/2 - 5 -offset.y, 3, 0, 2*Math.PI);
+        ctx.fill();
+      }
+      else{
+        ctx.beginPath();
+        ctx.arc(this.x + this.width/2 -offset.x, this.y +this.height/2 - 5 -offset.y, 3, 0, 2*Math.PI);
+        ctx.fill();
+      }
+
     }
-
-
-    // OLHO
-    ctx.fillStyle = "rgb(255, 255, 255)";
-    ctx.beginPath();
-    ctx.arc(this.x + this.width/2 - offset.x, this.y +this.height/2 -offset.y, 12, 0, 2*Math.PI);
-    ctx.fill();
-
-    //PUPILA
-    ctx.fillStyle = "rgb(140, 14, 14)";
-    ctx.beginPath();
-    ctx.arc(this.x + this.width/2 + 4*Math.sin(frames) - offset.x, this.y +this.height/2 - 5 -offset.y, 3, 0, 2*Math.PI);
-    ctx.fill();
-
-
 
   }
 
@@ -204,6 +210,7 @@ class girador extends mob{
         case 0:
           ctx.strokeStyle = 'hsl(210, 64%, 28%)'
           ctx.lineWidth = 5;
+          ctx.beginPath();
           ctx.moveTo(this.x - offset.x, this.y + this.height/2 - offset.y);
           ctx.lineTo(this.x + this.width - offset.x, this.y + this.height/2 - offset.y);
           ctx.stroke();
@@ -223,6 +230,7 @@ class girador extends mob{
 
           ctx.strokeStyle = 'hsl(210, 64%, 28%)'
           ctx.lineWidth = 5;
+          ctx.beginPath();
           ctx.moveTo(this.x + this.width/2 - offset.x, this.y - offset.y);
           ctx.lineTo(this.x + this.width/2 - offset.x, this.y + this.height - offset.y);
           ctx.stroke();
@@ -240,6 +248,7 @@ class girador extends mob{
         case 2:
           ctx.strokeStyle = 'hsl(210, 64%, 28%)'
           ctx.lineWidth = 5;
+          ctx.beginPath();
           ctx.moveTo(this.x - offset.x, this.y + this.height/2 - offset.y);
           ctx.lineTo(this.x + this.width - offset.x, this.y + this.height/2 - offset.y);
           ctx.stroke();
@@ -258,6 +267,7 @@ class girador extends mob{
 
           ctx.strokeStyle = 'hsl(210, 64%, 28%)'
           ctx.lineWidth = 5;
+          ctx.beginPath();
           ctx.moveTo(this.x + this.width/2 - offset.x, this.y - offset.y);
           ctx.lineTo(this.x + this.width/2 - offset.x, this.y + this.height - offset.y);
           ctx.stroke();
@@ -359,8 +369,8 @@ class thwomp extends mob{
 
   draw(){
     ctx.fillStyle = "#425166";
-    if(this.state == 1)
-      ctx.fillStyle = "rgb(140, 14, 14)";
+    // if(this.state == 1)
+    //   ctx.fillStyle = "rgb(140, 14, 14)";
 
     if(this.invul%2 == 0){
       var shake = 0;
@@ -371,31 +381,46 @@ class thwomp extends mob{
           shake =  5;
       }
 
-      if(this.state == 2 || this.state == 3 || (this.state == 0 && this.rest > 0)){
-        ctx.fillRect(this.x -offset.x, this.y -offset.y, this.width, this.height);
+      //CORPO
+      ctx.fillRect(this.x -offset.x +shake, this.y -offset.y, this.width, this.height);
 
-        ctx.fillStyle = "#000";
-        //ctx.lineWidth = 3;
-        ctx.beginPath();
-        ctx.arc(this.x + this.width/2 -offset.x, this.y +this.height/2 -offset.y, 15, 0, 2*Math.PI, false);
-        ctx.fill();
+      // ctx.fillStyle = "rgb(140, 14, 14)";
+      // ctx.fillRect(this.x +this.width/2 -offset.x -7.5, this.y +this.height/2 -offset.y -3, 15, 6);
 
+
+      //OLHO
+      if(this.state == 2 || this.state == 3 || this.state == 0)
+        // ctx.fillStyle = "rgb(70, 14, 14)";
+      // else if(this.state == 0)
+        ctx.fillStyle = "rgb(14, 140, 14)";
+      else
         ctx.fillStyle = "rgb(140, 14, 14)";
-        ctx.fillRect(this.x +this.width/2 -offset.x -7.5, this.y +this.height/2 -offset.y -3, 15, 6);
-      }
-      else{
-        ctx.fillRect(this.x -offset.x +shake, this.y -offset.y, this.width, this.height);
 
-        ctx.fillStyle = "#000";
-        //ctx.lineWidth = 3;
-        ctx.beginPath();
-        ctx.arc(this.x + this.width/2 -offset.x +shake, this.y +this.height/2 -offset.y, 15, 0, 2*Math.PI, false);
-        ctx.fill();
+      // ctx.fillStyle = "#000";
+      //ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.arc(this.x + this.width/2 -offset.x +shake, this.y +this.height/2 -offset.y, 15, 0, 2*Math.PI, false);
+      ctx.fill();
 
-        var vetor = vetorUnit({x: this.x + this.width/2, y: this.y +this.height/2}, p1);
-        ctx.fillStyle = "rgb(140, 14, 14)";
+      //PUPILA
+      var vetor = vetorUnit({x: this.x + this.width/2, y: this.y +this.height/2}, p1);
+
+      // if(this.state == 2 || this.state == 3 || this.state == 0)
+      //   // ctx.fillStyle = "rgb(70, 14, 14)";
+      // // else if(this.state == 0)
+      //   ctx.fillStyle = "rgb(14, 14, 140)";
+      // else
+      //   ctx.fillStyle = "rgb(140, 14, 14)";
+
+      ctx.fillStyle = "#000";
+      if(this.hp > 0){
         ctx.beginPath();
         ctx.arc(this.x + this.width/2 +10*vetor.x -offset.x +shake, this.y +this.height/2 +10*vetor.y -offset.y, 5, 0, 2*Math.PI, false);
+        ctx.fill();
+      }
+      else{
+        ctx.beginPath();
+        ctx.arc(this.x + this.width/2 -offset.x +shake, this.y +this.height/2 -offset.y, 5, 0, 2*Math.PI, false);
         ctx.fill();
       }
 
@@ -542,7 +567,8 @@ class pulador extends mob{
     this.hp = 5;
     this.invul = 0;
 
-    this.disX = disX;
+    this.disX = disX +1;
+
     this.frames = 0;
 
     this.width = 45;
@@ -574,12 +600,12 @@ class pulador extends mob{
           this.x -= this.velX;
 
         //  Movimento
-        if (this.x > (this.spawnJ +this.disX) * tile -this.width){
-          this.x = (this.spawnJ +this.disX) * tile -this.width;
+        if (this.x +this.width > (this.spawnJ +this.disX +1) * tile){
+          this.x = (this.spawnJ +this.disX +1) * tile -this.width;
           this.facingRight = false;
         }
-        else if (this.x < this.spawnJ * tile){
-          this.x = this.spawnJ * tile;
+        else if (this.x < (this.spawnJ -this.disX +1) * tile){
+          this.x = (this.spawnJ -this.disX +1) * tile;
           this.facingRight = true;
         }
 
@@ -622,28 +648,31 @@ class pulador extends mob{
           this.velY = 0;
           this.velX = 2;
 
-          if(this.x +this.width < (this.spawnJ +this.disX) * tile && this.x > this.spawnJ * tile){
+          if(this.x +this.width < (this.spawnJ +this.disX +1) * tile && this.x > (this.spawnJ -this.disX) * tile){
             this.state = 0;
           }
           else{
-            this.facingRight = !this.facingRight;
+            if(this.x +this.width/2 < (this.spawnJ)*tile +tile/2)
+              this.facingRight = true;
+            else
+              this.facingRight = false;
             this.state = 3;
           }
         }
 
         break;
-      case 3: //VOLTOU
+      case 3: //VOLTANDO
         if(this.facingRight){
           this.x += this.velX;
-          if(this.x > (this.spawnJ) * tile){
-            this.x = (this.spawnJ) * tile;
+          if(this.x > (this.spawnJ -this.disX) * tile){
+            //this.x = (this.spawnJ) * tile;
             this.state = 0;
           }
         }
         else{
           this.x -= this.velX;
-          if(this.x +this.width < (this.spawnJ +this.disX) * tile){
-            this.x = (this.spawnJ +this.disX) * tile -this.width;
+          if(this.x +this.width < (this.spawnJ+1+this.disX) * tile){
+            //this.x = (this.spawnJ+1) * tile -this.width;
             this.state = 0;
           }
         }
@@ -660,35 +689,59 @@ class pulador extends mob{
       ctx.fillStyle = "rgb(14, 14, 140)";
 
     if(this.invul%2 == 0){
+      ctx.globalAlpha = 1/5;
+      ctx.fillRect(this.spawnJ*tile -offset.x, this.spawnI*tile -offset.y, tile, tile);
+      ctx.globalAlpha = 1;
 
+      var shake = 0;
       if(this.rest > 0){
-        var shake = 0;
         if(this.rest % 3 == 1)
           shake = -5;
         else if(this.rest % 3 == 2)
           shake =  5;
+      }
 
-        ctx.fillRect(this.x -offset.x +shake, this.y -offset.y, this.width, this.height);
-        ctx.fillStyle = "#000";
-        if(this.facingRight){
-          ctx.fillRect(this.x +this.width -offset.x +shake, this.y -offset.y +this.height/4, -this.width/2, this.height/2);
-        }
-        else{
-          ctx.fillRect(this.x -offset.x +shake, this.y -offset.y +this.height/4, this.width/2, this.height/2);
-        }
+      ctx.fillRect(this.x -offset.x +shake, this.y -offset.y, this.width, this.height);
+      ctx.fillStyle = "#000";
+      if(this.facingRight){
+        ctx.strokeStyle = 'hsl(210, 64%, 28%)'
+        ctx.lineWidth = 5;
+        ctx.beginPath();
+        ctx.moveTo(this.x - offset.x +shake, this.y + this.height/2 - offset.y);
+        ctx.lineTo(this.x + this.width - offset.x +shake, this.y + this.height/2 - offset.y);
+        ctx.stroke();
+
+        ctx.fillStyle = "#ffffff";
+        ctx.beginPath();
+        ctx.arc(this.x + this.width - offset.x +shake, this.y + this.height/2 - offset.y, 12, Math.PI / 2, 3*Math.PI/2);
+        ctx.fill();
+
+        ctx.fillStyle = '#b60000'
+        ctx.beginPath();
+        ctx.arc(this.x + this.width - offset.x +shake, this.y + this.height/2 - offset.y, 6, Math.PI / 2, 3*Math.PI/2);
+        ctx.fill();
       }
       else{
-        ctx.fillRect(this.x -offset.x, this.y -offset.y, this.width, this.height);
-        ctx.fillStyle = "#000";
-        if(this.facingRight){
-          ctx.fillRect(this.x +this.width -offset.x, this.y -offset.y +this.height/4, -this.width/2, this.height/2);
-        }
-        else{
-          ctx.fillRect(this.x -offset.x, this.y -offset.y +this.height/4, this.width/2, this.height/2);
-        }
+        ctx.strokeStyle = 'hsl(210, 64%, 28%)'
+        ctx.lineWidth = 5;
+        ctx.beginPath();
+        ctx.moveTo(this.x - offset.x +shake, this.y + this.height/2 - offset.y);
+        ctx.lineTo(this.x + this.width - offset.x +shake, this.y + this.height/2 - offset.y);
+        ctx.stroke();
+
+        ctx.fillStyle = "#ffffff";
+        ctx.beginPath();
+        ctx.arc(this.x - offset.x +shake, this.y + this.height/2 - offset.y, 12, Math.PI / 2, 3*Math.PI/2, true);
+        ctx.fill();
+
+        ctx.fillStyle = '#b60000'
+        ctx.beginPath();
+        ctx.arc(this.x - offset.x +shake, this.y + this.height/2 - offset.y, 6, Math.PI / 2, 3*Math.PI/2, true);
+        ctx.fill();
       }
 
     }
+
   }
 
   onHit(){

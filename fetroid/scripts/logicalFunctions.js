@@ -67,7 +67,8 @@ function rectCollision(square1, square2){
   return false;
 }
 
-function lineLineCollision(p0, p1, p2, p3){ //substituir
+//substituir
+function lineLineCollision(p0, p1, p2, p3){
   var s1, s2;
   s1 = {x: p1.x - p0.x, y: p1.y - p0.y};
   s2 = {x: p3.x - p2.x, y: p3.y - p2.y};

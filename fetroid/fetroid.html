@@ -5,26 +5,16 @@
   <meta charset="utf-8"></meta>
   <link rel="stylesheet" type="text/css" href="scripts/canvas.css"></link>
   <script type="text/javascript" src="scripts/logicalFunctions.js"></script>
-  <script type="text/javascript" src="scripts/area_01.js"></script>
+  <script type="text/javascript" src="scripts/areaManager.js"></script>
   <script type="text/javascript" src="scripts/monsters.js"></script>
 </head>
 <body bgcolor = "#36F" oncontextmenu = "return false">
 <script>
 
-//-------------------- VARIÁVEIS -------------------------------------------------------------------------------
+//-------------------- VARIÁVEIS -----------------------------------------------
   var
     // VARIAVEIS CONFUSAS ------------------
-    auxG = 0, //  Serve pra contar regressivamente o floatTime definido. Importante pra float time
     airFramesGlobal = 0, // Remover quando terminar de debuggar
-    aux = 0, //brilho do capacete
-    auxHP = 0,
-    fade = {value: 0, maxValue: 150, in: true},
-    area = new area_01(),
-    pulosExtras = 1,
-    pulaNovamente = false,
-    auxSpawn = {x: 0, y: 0},
-
-    auxFade,
 
     // CANVAS & FRAMES ---------------------
     canvas,
@@ -34,29 +24,46 @@
     fps = 0,
     lastCall = 0,
 
+    //AUXILIOS VISUAIS----------------------
+    auxHP = 0,
+    auxFade,
+    fade = {value: 0, maxValue: 150, in: true},
+
     // PLAYER 1 ----------------------------
           // Possui Struct, botões e controles.
           // Importante: "x" & "y" não são coordenadas da ponta superior esquerda, mas sim do centro da hitbox.
           // Para pegar coordenadas da ponta superior esquerda, deve-se fazer "x - p1.width"
 
     p1 = {x: 100, y: 100, width: 50, height: 50, dx: 0, dy: 0, dxExt: 0, dyExt: 0, accX: 0, accY: 0,
-      onGround: false, facingRight: true, iframes: 0, i: 0, j: 0, hp: 10},
+      onGround: false, cor: 0, facingRight: true, iframes: 0, i: 0, j: 0, hp: 10, dmg: 1},
 
-    p1Keys = {u: 87, l: 65, d: 83, r: 68, shoot: 188},
-    // p1Keys = {u: 90, l: 37, d: 40, r: 39, shoot: 88},
-    p1Control = {u: false, l: false, d: false, r: false, shoot: false},
+    p1Keys    = {u: 87,    l: 65,    d: 83,    r: 68,    shoot: 188,   swap: 190},
+    p1Control = {u: false, l: false, d: false, r: false, shoot: false, swap: false},
+
+    pulosExtras = 1,
+    pulaNovamente = false,
+    auxSpawn = {x: 0, y: 0},
 
     upgrades = {doubleJump: false},
 
+    tiroDelay = {atual: 0, max: 10},
+    swapDelay = {atual: 0, max: 30},
+
+    auxG = 0, //  Serve pra contar regressivamente o floatTime definido. Importante pra float time
+
+    // BALAS E EFEITOS -----------------------------
     allyBullets = [],
     enemyBullets = [],
     effects = [],
+
+    sons = [],
 
     // MONSTRO ----------------------------
     mobList = [],
 
     // MAPAS --------------------------------
-    tile = 70, // Tamanho do tile/quadrado da grade
+    area = new areaManager(),
+    tile = 64, // Tamanho do tile/quadrado da grade
 
     // CAMPO DE VISÃO --------------------------
     zoom = 1,    //  Define o quão maior as imagens vão ser desenhadas no canvas
@@ -67,116 +74,37 @@
     width = tile * 13, // Comprimento, em pixels, do campo de visão do jogador
     height = tile * 9; // Altura, em pixels, do campo de visão do jogador
 
-// ---------------- INICIALIZACAO DO JOGO -------------------------------------------------------------------------------
+//-------------------- CLASSES -------------------------------------------------
+  class bullet{
+    constructor(x ,y, radius, dx, dy, dmg, cor){
+      this.x = x;
+      this.y = y;
+      this.radius = radius;
 
-  // MONSTROS --------------------------------
+      this.dx = dx;
+      this.dy = dy;
 
-  function updateMobList(){
-    //BALAS ALIADAS
-    for(var i = 0; i < allyBullets.length; i++){
-      allyBullets[i].x += allyBullets[i].dx;
+      this.dmg = dmg;
 
-      //SAIU DA TELA
-      if(!circleRectCollision(allyBullets[i], {x: offset.x, y: offset.y, width: width, height: height})){
-        allyBullets.splice(i, 1);
-        i--;
-        break;
-      }
-
-      //BATEU NA PAREDE
-      if(area.salaAtual.grid[Math.floor(allyBullets[i].y / tile)][Math.floor(allyBullets[i].x / tile)] == 1){
-        if(allyBullets[i].dx > 0)
-          effects.push({x: Math.floor(allyBullets[i].x / tile) *tile, y: allyBullets[i].y, frames: 10, type: 0});
-        else
-          effects.push({x: (Math.floor(allyBullets[i].x / tile) +1) *tile, y: allyBullets[i].y, frames: 10, type: 0});
-
-        allyBullets.splice(i, 1);
-        i--;
-        break;
-      }
-
-      //BATEU NUM MONSTRO
-      for(var j = 0; j < mobList.length; j++){
-        if(circleRectCollision(allyBullets[i], mobList[j]) && (mobList[j].hp > 0)){
-          mobList[j].onHit();
-          if(mobList[j].hp <= 0){
-            //effects.push({x: mobList[j].x +mobList[j].width/2, y: mobList[j].y +mobList[j].height/2, frames: 10, type: 1});
-            effects.push({mob: mobList[j], frames: 10, type: 1});
-            mobList[j].dy = 0;
-            //mobList.splice(j, 1);
-          }
-          else{
-            if(allyBullets[i].x < mobList[j].x +mobList[j].width/2)
-              effects.push({x: mobList[j].x, y: allyBullets[i].y, frames: 10, type: 0});
-            else
-              effects.push({x: mobList[j].x +mobList[j].width, y: allyBullets[i].y, frames: 10, type: 0});
-          }
-
-          allyBullets.splice(i, 1);
-          i--;
-          break;
-        }
-      }
-
+      this.cor = cor;
     }
 
-    //BALAS INIMIGAS
-    for(var i = 0; i < enemyBullets.length; i++){
-      enemyBullets[i].x += enemyBullets[i].dx;
-      enemyBullets[i].y += enemyBullets[i].dy;
-
-      //SAIU DA TELA
-      if(!circleRectCollision(enemyBullets[i], {x: offset.x, y: offset.y, width: width, height: height})){
-        enemyBullets.splice(i, 1);
-        i--;
-        break;
-      }
-
-      //BATEU NA PAREDE
-      if(area.salaAtual.grid[Math.floor(enemyBullets[i].y / tile)][Math.floor(enemyBullets[i].x / tile)] == 1){
-        // if(enemyBullets[i].dx > 0)
-        //   effects.push({x: Math.floor(enemyBullets[i].x / tile) *tile, y: enemyBullets[i].y, frames: 10});
-        // else
-        //   effects.push({x: (Math.floor(enemyBullets[i].x / tile) +1) *tile, y: enemyBullets[i].y, frames: 10});
-
-        enemyBullets.splice(i, 1);
-        i--;
-        break;
-      }
-
-    }
-
-    //UPDATE MOBLIST
-    for(i = 0; i < mobList.length; i++){
-      if(mobList[i].hp > 0)
-        mobList[i].update();
+    draw(){
+      if(this.cor == 0)
+        ctx.fillStyle = "#05a5ff";
       else
-        mobList[i].deadUpdate();
+        ctx.fillStyle = "#ffa505";
+
+      ctx.beginPath();
+      ctx.arc(this.x -offset.x, this.y -offset.y, this.radius, 0, 2*Math.PI, false);
+      ctx.fill();
     }
 
   }
-
-  function drawMobList(){
-    //DRAW MOBLIST
-    for(var i = 0; i < mobList.length; i++){
-      mobList[i].draw();
-
-      if(mobList[i].hp <= 0){
-        ctx.globalAlpha = 0.75;
-        ctx.fillStyle = "#000";
-        ctx.fillRect(mobList[i].x -offset.x, mobList[i].y -offset.y, mobList[i].width, mobList[i].height);
-        ctx.globalAlpha = 1;
-      }
-
-    }
-  }
-
-  // MAPA ------------------------------------
 
 // ---------------- UPDATE -----------------------------------------------------
 
-  // COLISÕES
-  // DIVINO, MEU MAGNUM OPUS
+  // COLISÕES --------------------------------
   function checkCollisionNotFixed(Player, fPlayer, Control){
     //SE DOWN ESTA APERTADO ELE ATRAVESSA
     if(!Control.d){
@@ -191,6 +119,8 @@
             Player.accY = 0;
             Player.onGround = true;
             Control.u = false;
+            // sons[4].currentTime = 0;
+            // sons[4].play();
             return;
           }
           //CENTRO
@@ -201,6 +131,8 @@
             Player.accY = 0;
             Player.onGround = true;
             Control.u = false;
+            // sons[4].currentTime = 0;
+            // sons[4].play();
             return;
           }
           //DIREITA
@@ -211,6 +143,8 @@
             Player.accY = 0;
             Player.onGround = true;
             Control.u = false;
+            // sons[4].currentTime = 0;
+            // sons[4].play();
             return;
           }
         }
@@ -242,6 +176,8 @@
         Player.accY = 0;
         Player.onGround = true;
         Control.u = false; //IMPEDE SEGURAR BOTÃO E PULAR CONSECUTIVAMENTE. TRANSFORMA "Control.u" EM FALSE AO TOCAR NO CHÃO
+        // sons[4].currentTime = 0;
+        // sons[4].play();
       }
       //CENTRO
       else if(rectCollision(fPlayer, {x: (Player.j) * tile, y: (Player.i+1) * tile, width: tile, height: tile})
@@ -251,6 +187,8 @@
         Player.accY = 0;
         Player.onGround = true;
         Control.u = false; //IMPEDE SEGURAR BOTÃO E PULAR CONSECUTIVAMENTE. TRANSFORMA "Control.u" EM FALSE AO TOCAR NO CHÃO
+        // sons[4].currentTime = 0;
+        // sons[4].play();
       }
       //DIREITA
       else if(rectCollision(fPlayer, {x: (Player.j+1) * tile, y: (Player.i+1) * tile, width: tile, height: tile})
@@ -260,6 +198,8 @@
         Player.accY = 0;
         Player.onGround = true;
         Control.u = false; //IMPEDE SEGURAR BOTÃO E PULAR CONSECUTIVAMENTE. TRANSFORMA "Control.u" EM FALSE AO TOCAR NO CHÃO
+        // sons[4].currentTime = 0;
+        // sons[4].play();
       }
     }
 
@@ -298,7 +238,7 @@
     if(Player.dx > 0){
       //SUPERIOR
       if(rectCollision(fPlayer, {x: (Player.j+1) * tile, y: (Player.i-1) * tile, width: tile, height: tile})
-      && area.salaAtual.grid[Player.i-1][Player.j+1] == 1 && area.salaAtual.grid[Player.i-1][Player.j] != 1){
+      && area.salaAtual.grid[Player.i-1][Player.j+1] == 1){
         Player.dx = 0;
         Player.x = (Player.j+1) * tile - Player.width/2;
       }
@@ -310,7 +250,7 @@
       }
       //INFERIOR
       else if(rectCollision(fPlayer, {x: (Player.j+1) * tile, y: (Player.i+1) * tile, width: tile, height: tile})
-      && area.salaAtual.grid[Player.i+1][Player.j+1] == 1 && area.salaAtual.grid[Player.i+1][Player.j] != 1){
+      && area.salaAtual.grid[Player.i+1][Player.j+1] == 1){
         Player.dx = 0;
         Player.x = (Player.j+1) * tile - Player.width/2;
       }
@@ -320,7 +260,7 @@
     else if(Player.dx < 0){
       //SUPERIOR
       if(rectCollision(fPlayer, {x: (Player.j-1) * tile, y: (Player.i-1) * tile, width: tile, height: tile})
-      && area.salaAtual.grid[Player.i-1][Player.j-1] == 1 && area.salaAtual.grid[Player.i-1][Player.j] != 1){
+      && area.salaAtual.grid[Player.i-1][Player.j-1] == 1){
         Player.dx = 0;
         Player.x = (Player.j) * tile + Player.width/2;
       }
@@ -332,7 +272,7 @@
       }
       //INFERIOR
       else if(rectCollision(fPlayer, {x: (Player.j-1) * tile, y: (Player.i+1) * tile, width: tile, height: tile})
-      && area.salaAtual.grid[Player.i+1][Player.j-1] == 1 && area.salaAtual.grid[Player.i+1][Player.j] != 1){
+      && area.salaAtual.grid[Player.i+1][Player.j-1] == 1){
         Player.dx = 0;
         Player.x = (Player.j) * tile + Player.width/2;
       }
@@ -344,40 +284,42 @@
     Player.y += Player.dy;
   }
 
-  //INPUTS DO PLAYER
+  function takeDamage(Player, dmg, dir){
+    Player.hp -= dmg;
+    auxHP = dmg;
+    Player.iframes = 100;
+
+    //KNOCKBACK
+      //VELOCIDADE HORIZONTAL DE KNOCKBACK
+        //lADO ESQUERDO
+    if(dir)
+      Player.dxExt = -5;
+        //LADO DIREITO
+    else
+      Player.dxExt = 5;
+
+      //VELOCIDADE VERTICAL DE KNOCKBACK
+        //SE TIVER NO CHAO DA UM PULINHO
+    if(Player.onGround){
+      Player.dyExt = -5;
+      Player.onGround = false;
+    }
+
+    Player.accY = 0;
+    Player.dy = 0;
+  }
+
+  // INPUTS DO PLAYER ------------------------
   function controlPlayer(Player, Control){
     var accX, maxAccX, maxVelX, grav, floatGrav, maxAccY, jmpVel, maxVelY, floatTime, airFrames;
-
-    //SE FADE ESTIVER EM ZERO E NAO TIVER TOMADO TAPA
-    var controllable = (Player.iframes < 90) && (fade.value == 0);
 
     if(Player.iframes == 0){
       //BALAS DO INIMIGOS-------------------------------------------------------
       for(var i = 0; i < enemyBullets.length; i++){
         if(circleRectCollision(enemyBullets[i],
-          {x: Player.x -Player.width/2, y: Player.y -Player.height/2, width: Player.width, height: Player.height})){
-          Player.hp -= 2;
-          auxHP = 2;
-          Player.iframes = 100;
+        {x: Player.x -Player.width/2, y: Player.y -Player.height/2, width: Player.width, height: Player.height})){
 
-          //KNOCKBACK
-            //VELOCIDADE HORIZONTAL DE KNOCKBACK
-              //lADO ESQUERDO
-          if(enemyBullets[i].dx < 0)
-            Player.dxExt = -5;
-              //LADO DIREITO
-          else
-            Player.dxExt = 5;
-
-            //VELOCIDADE VERTICAL DE KNOCKBACK
-              //SE TIVER NO CHAO DA UM PULINHO
-          if(Player.onGround){
-            Player.dyExt = -5;
-            Player.onGround = false;
-          }
-
-          Player.accY = 0;
-          Player.dy = 0;
+          takeDamage(Player, enemyBullets[i].dmg, enemyBullets[i].dx < 0);
 
           allyBullets.splice(i, 1);
           break;
@@ -390,28 +332,8 @@
         for(i = 0; i < mobList.length; i++){
           if(rectCollision({x: Player.x -Player.width/2, y: Player.y -Player.height/2, width: Player.width, height: Player.height},
           mobList[i]) && (mobList[i].hp > 0) && mobList[i].dmg > 0){
-            Player.hp -= mobList[i].dmg;
-            auxHP = mobList[i].dmg;
-            Player.iframes = 100;
 
-            //KNOCKBACK
-              //VELOCIDADE HORIZONTAL DE KNOCKBACK
-                //lADO ESQUERDO
-            if(Player.x -Player.width/2 < mobList[i].x)
-              Player.dxExt = -5;
-                //LADO DIREITO
-            else
-              Player.dxExt = 5;
-
-              //VELOCIDADE VERTICAL DE KNOCKBACK
-                //SE TIVER NO CHAO DA UM PULINHO
-            if(Player.onGround){
-              Player.dyExt = -5;
-              Player.onGround = false;
-            }
-
-            Player.accY = 0;
-            Player.dy = 0;
+            takeDamage(Player, mobList[i].dmg, (Player.x -Player.width/2) < mobList[i].x);
 
             break;
           }
@@ -449,6 +371,10 @@
         //RESETA A SALA ATUAL
         area.mudarSala(area.salaAtual.id);
 
+        // RESETA O OFFSET
+      	offset.x = (-width/2 + p1.x -p1.width/2);
+      	offset.y = (-height/2 + p1.y -p1.height/2);
+
         //RESETA FADE E FRAMES
         fade.in = true;
         frames = 0;
@@ -458,21 +384,37 @@
       return;
     }
 
+    //SE FADE ESTIVER EM ZERO E NAO TIVER TOMADO TAPA
+    var controllable = (Player.iframes < 90) && (fade.value == 0);
+
+    //DELAYS--------------------------------------------------------------------
+
+    tiroDelay.atual = tiroDelay.atual > 0 ? --tiroDelay.atual : 0;
+    swapDelay.atual = swapDelay.atual > 0 ? --swapDelay.atual : 0;
 
     // -------------------------------------------- CONTROLE  ------------------------------------------------------------------------------------------
-    // TIRO ------------------------------------------------------------------------
-    if(Control.shoot && controllable){ // PLAYER ONLY CONTROLLABLE LESS THAN 90 iFRAMES
-      aux = 20;
-      Control.shoot = false;
-      if(Player.facingRight)
-        allyBullets.push({x: Player.x +Player.width/2, y: Player.y, radius: 10, dx:  20});
-      else
-        allyBullets.push({x: Player.x -Player.width/2, y: Player.y, radius: 10, dx: -20});
-
-      console.log(allyBullets.length);
+    // MUDAR DE COR ------------------------------------------------------------
+    if(Control.swap && controllable && swapDelay.atual == 0){
+      Player.cor = Player.cor == 1 ? 0 : 1;
+      Control.swap = false;
+      swapDelay.atual = swapDelay.max;
     }
-    else if(aux > 0){
-      aux--;
+
+    // TIRO --------------------------------------------------------------------
+    if(Control.shoot && controllable && tiroDelay.atual == 0){ // PLAYER ONLY CONTROLLABLE LESS THAN 90 iFRAMES
+      sons[1].currentTime = 0;
+      sons[1].play();
+
+      tiroDelay.atual = tiroDelay.max;
+
+      Control.shoot = false;
+
+      if(Player.facingRight)
+        allyBullets.push(new bullet(Player.x +Player.width/2, Player.y, 10,  20, 0, Player.dmg, Player.cor));
+      else
+        allyBullets.push(new bullet(Player.x -Player.width/2, Player.y, 10, -20, 0, Player.dmg, Player.cor));
+
+      //console.log(allyBullets.length);
     }
 
     // HORIZONTAL---------------------------------------------------------------
@@ -506,10 +448,11 @@
       if(Player.accX > maxAccX)
         Player.accX = maxAccX;
     }
-    else
+    else{
       Player.accX = 0;
+    }
 
-    if(p1.onGround)  // Modifica a velocidade do player1 no ar
+    if(p1.onGround) // Modifica a velocidade do player1 no ar
       maxVelX = 7;
     else
       maxVelX = 4.2;
@@ -547,6 +490,9 @@
 
     if(Control.u && controllable){
       if(Player.onGround){
+        // sons[3].currentTime = 0;
+        // sons[3].play();
+
         airFrames = 0;
         airFramesGlobal= 0; // Remover quando terminar de debuggar
         Player.dy = jmpVel;
@@ -558,6 +504,22 @@
     }
     else
       auxG = 0;
+
+    //  PULO DUPLO ARIBA ARIBA
+    if (Control.u == true  && pulaNovamente == true ){
+      // sons[3].currentTime = 0;
+      // sons[3].play();
+      Player.dy = -14;
+      // Player.accY = 0;
+      // Player.dy = -7;
+      console.log("foda");
+      pulosExtras--;
+      pulaNovamente = false;
+    }
+
+    if (Control.u == false && Player.onGround == false && pulosExtras > 0){
+      pulaNovamente = true;
+    }
 
     if (Player.onGround){
       pulosExtras = 1;
@@ -580,20 +542,6 @@
     (Player.y + Player.height/2 == (Player.i+1) * tile && area.salaAtual.grid[Player.i+1][jD] == 1) )){
       Player.onGround = false;
       //pulos sobrando = 1
-    }
-
-    //  PULO DUPLO ARIBA ARIBA
-    if (Control.u == true  && pulaNovamente == true ){
-      Player.dy = -14;
-      // Player.accY = 0;
-      // Player.dy = -7;
-      console.log("foda");
-      pulosExtras--;
-      pulaNovamente = false;
-    }
-
-    if (Control.u == false && Player.onGround == false && pulosExtras > 0){
-      pulaNovamente = true;
     }
 
     //DA GRAVIDADE PRO PLAYER
@@ -634,7 +582,7 @@
 
   }
 
-  //MANTER O PLAYER NO MAPA (OPCIONAL?)
+  // MANUTENCAO DA CAMERA --------------------
   function boundPlayer(Player){
     if(Player.x + Player.width/2 > mapWidth){
       Player.x = mapWidth - Player.width/2;
@@ -664,8 +612,11 @@
     //ZOOM
     zoom = 1;
 
-  	offset.x = (-(1/zoom)*width/2 + p1.x -p1.width/2);
-  	offset.y = (-(1/zoom)*height/2 + p1.y -p1.height/2);
+  	// offset.x = (-(1/zoom)*width/2 + p1.x -p1.width/2);
+  	// offset.y = (-(1/zoom)*height/2 + p1.y -p1.height/2);
+
+  	offset.x += ((-width/2 + p1.x -p1.width/2) -offset.x)*0.05;
+  	offset.y += ((-height/2 + p1.y -p1.height/2) -offset.y)*0.05;
 
     if(offset.x < 0) offset.x = 0;
     else if(offset.x > mapWidth -width) offset.x = mapWidth -width;
@@ -674,41 +625,113 @@
     else if(offset.y > mapHeight -height) offset.y = mapHeight -height;
   }
 
+  // BALAS -----------------------------------
+
+  function updateBullets(){
+    //BALAS ALIADAS
+    for(var i = 0; i < allyBullets.length; i++){
+      allyBullets[i].x += allyBullets[i].dx;
+      allyBullets[i].y += allyBullets[i].dy;
+
+      //SAIU DA TELA
+      if(!circleRectCollision(allyBullets[i], {x: offset.x, y: offset.y, width: width, height: height})){
+        allyBullets.splice(i, 1);
+        i--;
+        break;
+      }
+
+      //BATEU NA PAREDE
+      var bI = Math.floor(allyBullets[i].y / tile);
+      var bJ = Math.floor(allyBullets[i].x / tile);
+
+      if(area.salaAtual.grid[bI][bJ] == 1){
+        if(allyBullets[i].dx > 0)
+          effects.push({x: (bJ) *tile, y: allyBullets[i].y, cor: allyBullets[i].cor, frames: 10, type: 0});
+        else
+          effects.push({x: (bJ +1) *tile, y: allyBullets[i].y, cor: allyBullets[i].cor, frames: 10, type: 0});
+
+        sons[0].currentTime = 0;
+        sons[0].play();
+
+        allyBullets.splice(i, 1);
+        i--;
+        break;
+      }
+
+      //BATEU NUM MONSTRO
+      for(var j = 0; j < mobList.length; j++){
+        if(circleRectCollision(allyBullets[i], mobList[j]) && (mobList[j].hp > 0)){
+
+          if(allyBullets[i].x < mobList[j].x +mobList[j].width/2)
+            effects.push({x: mobList[j].x, y: allyBullets[i].y, cor: allyBullets[i].cor, frames: 10, type: 0});
+          else
+            effects.push({x: mobList[j].x +mobList[j].width, y: allyBullets[i].y, cor: allyBullets[i].cor, frames: 10, type: 0});
+
+          mobList[j].onHit(allyBullets[i].dmg, allyBullets[i].cor);
+          if(mobList[j].hp <= 0){
+            //effects.push({x: mobList[j].x +mobList[j].width/2, y: mobList[j].y +mobList[j].height/2, frames: 10, type: 1});
+            effects.push({mob: mobList[j], frames: 10, type: 1});
+            mobList[j].dy = 0;
+            //mobList.splice(j, 1);
+          }
+
+          allyBullets.splice(i, 1);
+          i--;
+          break;
+        }
+      }
+
+    }
+
+    //BALAS INIMIGAS
+    for(var i = 0; i < enemyBullets.length; i++){
+      enemyBullets[i].x += enemyBullets[i].dx;
+      enemyBullets[i].y += enemyBullets[i].dy;
+
+      //SAIU DA TELA
+      if(!circleRectCollision(enemyBullets[i], {x: offset.x, y: offset.y, width: width, height: height})){
+        enemyBullets.splice(i, 1);
+        i--;
+        break;
+      }
+
+      //BATEU NA PAREDE
+      if(area.salaAtual.grid[Math.floor(enemyBullets[i].y / tile)][Math.floor(enemyBullets[i].x / tile)] == 1){
+        // if(enemyBullets[i].dx > 0)
+        //   effects.push({x: Math.floor(enemyBullets[i].x / tile) *tile, y: enemyBullets[i].y, frames: 10});
+        // else
+        //   effects.push({x: (Math.floor(enemyBullets[i].x / tile) +1) *tile, y: enemyBullets[i].y, frames: 10});
+
+        enemyBullets.splice(i, 1);
+        i--;
+        break;
+      }
+
+    }
+  }
+
+  // MONSTROS --------------------------------
+
+  function updateMobList(){
+    //UPDATE MOBLIST
+    for(i = 0; i < mobList.length; i++){
+      if(mobList[i].hp > 0)
+        mobList[i].update();
+      else
+        mobList[i].deadUpdate();
+    }
+
+  }
+
 // ---------------- DRAW -------------------------------------------------------
 
   function drawPlayer(Player){
     if(p1.iframes%4 == 0){
       ctx.fillRect(Player.x -Player.width/2 -offset.x, Player.y -Player.height/2 -offset.y, Player.width, Player.height);
 
-      // EFEITO DE LUZ
-      if(aux > 0){
-        // COR DO EFEITO DE LUZ
-        ctx.fillStyle = "#4a97c7";
-        ctx.globalAlpha = (1/20) * aux;
-        if(Player.facingRight){
-          // EFEITO NO VISOR
-          ctx.fillRect(Player.x +Player.width/2 -offset.x , Player.y -10 -offset.y -2, -30 -4, 15 +4);
-          // EFEITO NO CORPO
-          ctx.fillRect(Player.x - offset.x, Player.y - Player.width/2 - offset.y, Player.width/2, Player.height);
-        }
-        else {
-          ctx.fillRect(Player.x -Player.width/2 -offset.x , Player.y -10 -offset.y -2, 30 +4, 15 +4);
-          // AQUI TB
-          ctx.fillRect(Player.x - Player.width/2 - offset.x, Player.y - Player.width/2 - offset.y, Player.width/2, Player.height);
-        }
-        ctx.globalAlpha = 1;
-      }
-
       // COR DO VISOR
         // IDLE
         ctx.fillStyle = "rgb(12, 0, " + (80 + 25*Math.sin(frames/20)) + ")";
-
-
-      if(aux > 0) {
-
-        // DURANTE TIRO
-        ctx.fillStyle = "rgb(164, 203, 255)";
-      }
 
       // VISOR
       if(Player.facingRight)
@@ -723,20 +746,28 @@
 
   }
 
+  function drawMobList(){
+      //DRAW MOBLIST
+      for(var i = 0; i < mobList.length; i++){
+        mobList[i].draw();
+
+        if(mobList[i].hp <= 0){
+          ctx.globalAlpha = 0.75;
+          ctx.fillStyle = "#000";
+          ctx.fillRect(mobList[i].x -offset.x, mobList[i].y -offset.y, mobList[i].width, mobList[i].height);
+          ctx.globalAlpha = 1;
+        }
+
+      }
+    }
+
   function drawBullets(){
     for(i = 0; i < allyBullets.length; i++){
-      ctx.fillStyle = "#05a5ff";
-      ctx.beginPath();
-      ctx.arc(allyBullets[i].x -offset.x, allyBullets[i].y -offset.y, allyBullets[i].radius, 0, 2*Math.PI, false);
-        ctx.arc(allyBullets[i].x -offset.x -(Math.abs(allyBullets[i].dx)/allyBullets[i].dx)*allyBullets[i].radius, allyBullets[i].y -offset.y, allyBullets[i].radius/2, 0, 2*Math.PI, false);
-      ctx.fill();
+      allyBullets[i].draw();
     }
 
     for(i = 0; i < enemyBullets.length; i++){
-      ctx.fillStyle = "#ffa505";
-      ctx.beginPath();
-      ctx.arc(enemyBullets[i].x -offset.x, enemyBullets[i].y -offset.y, enemyBullets[i].radius, 0, 2*Math.PI, false);
-      ctx.fill();
+      enemyBullets[i].draw();
     }
   }
 
@@ -750,7 +781,12 @@
       }
 
       if(effects[i].type == 0){
-        ctx.strokeStyle = "#05a5ff";
+
+        if(effects[i].cor == 0)
+          ctx.strokeStyle = "#05a5ff";
+        else
+          ctx.strokeStyle = "#ffa505";
+
         ctx.lineWidth = 5;
         ctx.beginPath();
         ctx.arc(effects[i].x -offset.x, effects[i].y -offset.y, 2*(10 -effects[i].frames%10), 0, 2*Math.PI, false);
@@ -815,40 +851,17 @@
         ctx.fillRect(25 +(wid+3)*i, 20, wid, 25);
       }
     }
+
   }
 
   function debug(){
     ctx.fillStyle = "#F00";
-      // //X E Y DO PLAYER
-      // ctx.fillText("X: " + p1.x.toFixed(2) + " Y: " + p1.y.toFixed(2), 25, 25);
-      //
-      //DX E DY DO PLAYER
-      // ctx.fillText("dX: " + p1.dx.toFixed(2) + " dY: " + p1.dy.toFixed(2), 25, 45);
-      //
-      // //ACCX E ACCY DO PLAYER
-      // ctx.fillText("accX: " + p1.accX.toFixed(2) + " accY: " + p1.accY.toFixed(2), 25, 65);
-      //
-      // //I E J DO PLAYER
-      // ctx.fillText("I: " + p1.i + " J: " + p1.j, 25, 85);
-      //
-      // //SE O PLAYER ESTA NO CHAO OU NAO
-      // ctx.fillText("gnd: " + p1.onGround, 25, 105);
-      //
-      // //OFFSET X E OFFSET Y
-      // ctx.fillText("offX: " + offset.x.toFixed(2) + " offY: " + offset.y.toFixed(2), 25, 125);
-      //
-      // //COIOTE TIME
-      // ctx.fillText("Aux: " + auxG, 25, 145);
-      //
-      // //FRAMES NO AR
-      // ctx.fillText("Air Frames " + airFramesGlobal, 25, 165);
-      //
-      // //IFRAMES
-      // ctx.fillText("iframes: " + p1.iframes, 25, 185);
 
     //FPS
     ctx.fillText("FPS: " + fps.toFixed(0), width -90, 25);
+    //onGround
     ctx.fillText("gnd: " + p1.onGround,  width -90, 45);
+    //DX E DY
     ctx.fillText("dX: " + p1.dx.toFixed(2), width -90, 70);
     ctx.fillText("dY: " + p1.dy.toFixed(2), width -90, 95);
   }
@@ -857,7 +870,7 @@
 
   function keyDown(evt){
     if(!evt.repeat){
-      console.log(evt.keyCode);
+      //console.log(evt.keyCode);
       switch(evt.keyCode){
         case p1Keys.u:
           p1Control.u = true;
@@ -873,6 +886,9 @@
           break;
         case p1Keys.shoot:
           p1Control.shoot = true;
+          break;
+        case p1Keys.swap:
+          p1Control.swap = true;
           break;
       }
     }
@@ -894,6 +910,9 @@
         break;
       case p1Keys.shoot:
         p1Control.shoot = false;
+        break;
+      case p1Keys.swap:
+        p1Control.swap = false;
         break;
     }
   }
@@ -924,17 +943,30 @@
 
     document.body.appendChild(canvas);
 
+    sons[0] = new Audio("resources/audio/basic_shot_impact.wav");
+    sons[1] = new Audio("resources/audio/basic_shot.wav");
+    sons[2] = new Audio("resources/audio/footstep.wav");
+    sons[3] = new Audio("resources/audio/jump.wav");
+    sons[4] = new Audio("resources/audio/landing.wav");
+
+    sons[1].volume = 0.2;
+    sons[0].volume = 0.2;
+
     // vai sair daqui em breve
     area.mudarSala(1);
 
-    lastCall = performance.now();
-    run();
+    sons[4].onloadstart = function(){
+      lastCall = performance.now();
+      run();
+    }
+
   }
 
   function run(){
     update();
     render();
 
+    //FPS
     var delta = (Date.now() - lastCall)/1000;
     lastCall = Date.now();
     if(frames%50 == 0)
@@ -964,11 +996,17 @@
         //MUDA PARA A SALA 2
         area.mudarSala(area.salaAtual.grid[p1.i][p1.j].sala);
 
+        // RESETA O OFFSET
+      	offset.x = (-width/2 + p1.x -p1.width/2);
+      	offset.y = (-height/2 + p1.y -p1.height/2);
+
         fade.in = true;
         frames = 0;
       }
 
     }
+
+    updateBullets();
 
     updateMobList();
 
@@ -992,7 +1030,10 @@
     drawMobList();
 
     //Desenha o player
-    ctx.fillStyle = "rgb(0, 70, 190)";
+    if(p1.cor == 0)
+      ctx.fillStyle = "#05a5ff";
+    else
+      ctx.fillStyle = "#ffa505";
     drawPlayer(p1);
 
     drawBullets();

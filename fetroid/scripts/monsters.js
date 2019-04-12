@@ -1,6 +1,8 @@
 class mob {
 
-    constructor(spawnI, spawnJ){
+    constructor(cor, spawnI, spawnJ){
+      this.cor = cor;
+
       this.spawnI = spawnI;
       this.spawnJ = spawnJ;
 
@@ -9,6 +11,8 @@ class mob {
       this.x;
       this.y;
       this.dy;
+
+      this.invul;
     }
 
     deadUpdate(){
@@ -22,11 +26,22 @@ class mob {
       }
 
     }
+
+    onHit(dmg, cor){
+      if(this.cor == cor){
+        this.hp -= dmg;
+        this.invul = 20;
+
+        sons[0].currentTime = 0;
+        sons[0].play();
+      }
+
+    }
 }
 
 class morcego extends mob{
-  constructor(spawnI, spawnJ, disX){
-    super(spawnI, spawnJ);
+  constructor(cor, spawnI, spawnJ, disX){
+    super(cor, spawnI, spawnJ);
 
     this.hp = 5;
     this.invul = 0;
@@ -61,15 +76,11 @@ class morcego extends mob{
     }
   }
 
-  onHit(){
-    this.hp--;
-    this.invul = 20;
-  }
 }
 
 class crazyJ extends mob{
-  constructor(spawnI, spawnJ, disX){
-    super(spawnI, spawnJ);
+  constructor(cor, spawnI, spawnJ, disX){
+    super(cor, spawnI, spawnJ);
 
     this.hp = 5;
     this.invul = 0;
@@ -111,7 +122,11 @@ class crazyJ extends mob{
   }
 
   draw(){
-    ctx.fillStyle = "rgb(140, 14, 14)";
+    if(this.cor == 0)
+      ctx.fillStyle = "#05a5ff";
+    else
+      ctx.fillStyle = "#ffa505";
+
     if(this.invul%2 == 0){
       ctx.fillRect(this.x -offset.x, this.y -offset.y, this.width, this.height);
 
@@ -139,15 +154,11 @@ class crazyJ extends mob{
 
   }
 
-  onHit(){
-    this.hp--;
-    this.invul = 20;
-  }
 }
 
 class girador extends mob{
-  constructor(spawnI, spawnJ, disX, disY){
-    super(spawnI, spawnJ);
+  constructor(cor, spawnI, spawnJ, disX, disY){
+    super(cor, spawnI, spawnJ);
 
     this.hp = 2;
     this.invul = 0;
@@ -202,7 +213,11 @@ class girador extends mob{
   }
 
   draw(){
-    ctx.fillStyle = "#2e67b6";
+    if(this.cor == 0)
+      ctx.fillStyle = "#05a5ff";
+    else
+      ctx.fillStyle = "#ffa505";
+
     if(this.invul%2 == 0){
       ctx.fillRect(this.x -offset.x, this.y -offset.y, this.width, this.height);
 
@@ -287,15 +302,11 @@ class girador extends mob{
 
   }
 
-  onHit(){
-    this.hp--;
-    this.invul = 20;
-  }
 }
 
 class thwomp extends mob{
-  constructor(spawnI, spawnJ, disY){
-    super(spawnI, spawnJ);
+  constructor(cor, spawnI, spawnJ, disY){
+    super(cor, spawnI, spawnJ);
 
     this.hp = 5;
     this.invul = 0;
@@ -368,7 +379,11 @@ class thwomp extends mob{
   }
 
   draw(){
-    ctx.fillStyle = "#425166";
+    if(this.cor == 0)
+      ctx.fillStyle = "#05a5ff";
+    else
+      ctx.fillStyle = "#ffa505";
+
     // if(this.state == 1)
     //   ctx.fillStyle = "rgb(140, 14, 14)";
 
@@ -432,16 +447,11 @@ class thwomp extends mob{
     // ctx.globalAlpha = 1;
   }
 
-  onHit(){
-    this.hp--;
-    this.invul = 20;
-  }
-
 }
 
 class fentesma extends mob{
-  constructor(spawnI, spawnJ){
-    super(spawnI, spawnJ);
+  constructor(cor, spawnI, spawnJ){
+    super(cor, spawnI, spawnJ);
 
     this.hp = 5;
     this.invul = 0;
@@ -467,7 +477,7 @@ class fentesma extends mob{
     if((p1.i >= this.spawnI && p1.i < this.spawnI+4) && (p1.j > this.spawnJ-5 && p1.j < this.spawnJ+5)){
       vvv = vetorUnit({x:this.x + this.width/2, y: this.y +this.height/2}, p1);
       if(this.frames %100 == 0)
-        enemyBullets.push({x: this.x +this.width/2, y: this.y +this.height/2, radius: 10, dx: vvv.x*3, dy: vvv.y*3});
+        enemyBullets.push(new bullet(this.x +this.width/2, this.y +this.height/2, 10, vvv.x*3, vvv.y*3, this.dmg, this.cor));
     }
     else{
       vvv = vetorUnit({x:this.x + this.width/2, y: this.y +this.height/2},
@@ -489,21 +499,21 @@ class fentesma extends mob{
   }
 
   draw(){
-    ctx.fillStyle = "#f278f2";
+    if(this.cor == 0)
+      ctx.fillStyle = "#05a5ff";
+    else
+      ctx.fillStyle = "#ffa505";
+
     if(this.invul%2 == 0){
       ctx.fillRect(this.x -offset.x, this.y -offset.y, this.width, this.height);
     }
   }
 
-  onHit(){
-    this.hp--;
-    this.invul = 20;
-  }
 }
 
 class fentesma2 extends mob{
-  constructor(spawnI, spawnJ, disX, disY){
-    super(spawnI, spawnJ);
+  constructor(cor, spawnI, spawnJ, disX, disY){
+    super(cor, spawnI, spawnJ);
 
     this.hp = 5;
     this.invul = 0;
@@ -554,20 +564,16 @@ class fentesma2 extends mob{
 
   }
 
-  onHit(){
-    this.hp--;
-    this.invul = 20;
-  }
 }
 
 class pulador extends mob{
-  constructor(spawnI, spawnJ, disX){
-    super(spawnI, spawnJ);
+  constructor(cor, spawnI, spawnJ, disX){
+    super(cor, spawnI, spawnJ);
 
     this.hp = 5;
     this.invul = 0;
 
-    this.disX = disX +1;
+    this.disX = disX;
 
     this.frames = 0;
 
@@ -583,6 +589,7 @@ class pulador extends mob{
 
     this.state = 0;
     this.facingRight = true;
+
     this.rest = 0;
     this.aggroRest = 30;
   }
@@ -604,8 +611,8 @@ class pulador extends mob{
           this.x = (this.spawnJ +this.disX +1) * tile -this.width;
           this.facingRight = false;
         }
-        else if (this.x < (this.spawnJ -this.disX +1) * tile){
-          this.x = (this.spawnJ -this.disX +1) * tile;
+        else if (this.x < (this.spawnJ -this.disX) * tile){
+          this.x = (this.spawnJ -this.disX) * tile;
           this.facingRight = true;
         }
 
@@ -671,7 +678,7 @@ class pulador extends mob{
         }
         else{
           this.x -= this.velX;
-          if(this.x +this.width < (this.spawnJ+1+this.disX) * tile){
+          if(this.x +this.width < (this.spawnJ +this.disX +1) * tile){
             //this.x = (this.spawnJ+1) * tile -this.width;
             this.state = 0;
           }
@@ -682,11 +689,10 @@ class pulador extends mob{
   }
 
   draw(){
-    ctx.fillStyle = "rgb(140, 14, 14)";
-    if(this.state == 0)
-      ctx.fillStyle = "rgb(14, 140, 14)";
-    else if(this.state == 3)
-      ctx.fillStyle = "rgb(14, 14, 140)";
+    if(this.cor == 0)
+      ctx.fillStyle = "#05a5ff";
+    else
+      ctx.fillStyle = "#ffa505";
 
     if(this.invul%2 == 0){
       ctx.globalAlpha = 1/5;
@@ -744,8 +750,4 @@ class pulador extends mob{
 
   }
 
-  onHit(){
-    this.hp--;
-    this.invul = 20;
-  }
 }
